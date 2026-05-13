@@ -1,73 +1,100 @@
+<p align="center">
+  <img src="src/Dock.App/Assets/rock-et-dock-icon.png" width="96" alt="Rock ET Dock icon">
+</p>
+
 # Rock ET Dock
 
-Workspace para recriar um dock/app launcher moderno inspirado no RocketDock.
+**Your Windows dock should not feel like office furniture. It should hit like a loud amp.**
 
-## Projeto base
+Rock ET Dock is a per-user Windows dock and app launcher built in WPF, inspired by the classic RocketDock workflow and rebuilt as clean modern code. Pin the tools you actually use, drag files straight into the dock, throw the native taskbar backstage, and run your desktop from a sharper, faster, louder launcher.
 
-- Solucao: `Dock.slnx`
-- App WPF: `src/Dock.App/Dock.App.csproj`
-- Target: `.NET 10`, `net10.0-windows`
-- Build: `dotnet build Dock.slnx`
-- Run: `dotnet run --project src/Dock.App/Dock.App.csproj`
-- Release: `powershell -ExecutionPolicy Bypass -File installer/build-installer.ps1`
-- Validar geometria das quatro bordas: `dotnet run --project tests/Dock.GeometryChecks/Dock.GeometryChecks.csproj`
+> **Download the installer:** [latest GitHub release](https://github.com/Discasa/Rock-ET-Dock/releases/latest)
 
-## Contrato de dados
+No portable zip. No loose DLL hunt. Install it, launch it, tune it, move on.
 
-Esta dock foi desenhada para ser sempre por usuario:
+## Screenshots
 
-- Configuracao: `%LOCALAPPDATA%\Rock ET Dock\dock.config.json`
-- Pasta raiz do usuario: `%USERPROFILE%\Rock ET Dock`
-- Pasta de cada barra: `%USERPROFILE%\Rock ET Dock\<nome-da-barra>`
-- Log de runtime: `%LOCALAPPDATA%\Rock ET Dock\logs\runtime.log`
+![Rock ET Dock showcase with Windows button and sample items](assets/screenshots/dock-showcase.png)
 
-Quando arquivos, pastas ou links sao soltos na barra, o item deve ser movido/criado dentro da pasta da barra e a dock passa a apontar para essa copia gerenciada. Isso e intencionalmente diferente do RocketDock original.
+![Rock ET Dock with the native Windows taskbar hidden](assets/screenshots/dock-taskbar-hidden.png)
 
-O app tambem foi desenhado para uma unica aplicacao gerenciar varias barras. Cada barra tem nome, posicao e pasta propria, entao o usuario pode manter, por exemplo, uma barra na esquerda e outra na direita sem depender de multiplas instalacoes.
+| Left vertical | Right vertical |
+| --- | --- |
+| ![Rock ET Dock running vertically on the left edge](assets/screenshots/dock-left-vertical.png) | ![Rock ET Dock running vertically on the right edge](assets/screenshots/dock-right-vertical.png) |
 
-## Configuracoes
+| Top left | Top right |
+| --- | --- |
+| ![Rock ET Dock at the top-left corner](assets/screenshots/dock-top-left.png) | ![Rock ET Dock at the top-right corner](assets/screenshots/dock-top-right.png) |
 
-A janela de configuracoes fica no menu de contexto da barra, em `Configuracoes da barra`.
+| Bottom left | Bottom right |
+| --- | --- |
+| ![Rock ET Dock at the bottom-left corner](assets/screenshots/dock-bottom-left.png) | ![Rock ET Dock at the bottom-right corner](assets/screenshots/dock-bottom-right.png) |
 
-As categorias iniciais seguem a organizacao da RocketDock:
+![Rock ET Dock using the AstroOrange theme](assets/screenshots/dock-astro-orange.png)
 
-- Geral: nome, inicializacao, labels, bloqueio e auto-hide.
-- Geral tambem inclui o botao Windows e a opcao de esconder a barra nativa do Windows enquanto o Rock ET Dock estiver aberto.
-- Icones: tamanho, opacidade, espacamento, margem inferior, qualidade, zoom, alcance da ampliacao e hover.
-- Posicao: monitor, lado da tela, sobreposicao, largura, altura, distancia da borda e centralizacao com marcador de centro.
-- Estilo: temas da referencia RocketDock, opacidade do fundo, arredondamento da barra, arredondamento do fundo dos icones, fonte e cor da legenda.
-- Comportamento: minimizar janelas, indicadores, instancia existente e popup.
+## What It Does
 
-As configuracoes sao salvas e refletidas na barra imediatamente, sem botao manual de aplicacao. O botao Windows abre o menu Iniciar no clique esquerdo e o menu nativo Win+X no clique direito. O backend de minimizar janelas para a barra usa eventos Win32 e adiciona itens temporarios de janela na primeira barra aberta.
+- Runs as a clean per-user dock for Windows, with one app managing multiple docks.
+- Starts new docks with the Windows button, Recycle Bin, Settings, and Exit items ready.
+- Supports files, folders, links, separators, animated GIFs, the native Recycle Bin, and temporary minimized-window items.
+- Opens the native Start menu with left-click on the Windows button and the native Win+X menu with right-click.
+- Lets you place docks on the top, bottom, left, or right edge, with true vertical layout on the side edges.
+- Applies every setting immediately. There is no Apply button and no waiting room.
+- Hides the native Windows taskbar while Rock ET Dock is running, then restores it on exit.
+- Uses hover magnification that pushes neighboring icons aside instead of stacking them.
+- Supports English and Brazilian Portuguese from the settings window.
+- Ships as an installer built with Inno Setup.
 
-Os indicadores de apps abertos e a opcao de abrir instancia existente funcionam em modo best-effort para itens `.exe` e atalhos `.lnk` resolviveis. Itens que abrem documentos, URLs, apps modernos/UWP ou comandos indiretos podem nao mapear para um processo existente.
+## Install
 
-O simbolo inicial do projeto fica em `assets/rock-et-dock-logo.svg` e tambem existe como controle WPF em `src/Dock.App/Controls/BrandLogo.xaml`.
+1. Go to the [latest release](https://github.com/Discasa/Rock-ET-Dock/releases/latest).
+2. Download `Rock-ET-Dock-Setup-<version>-win-x64.exe`.
+3. Run the installer.
+4. Launch **Rock ET Dock**.
 
-## Pesquisa inicial
+The installer is the intended distribution path. The app is self-contained, so the user does not need to install the .NET runtime separately.
 
-- Notas de engenharia reversa e requisitos: [`docs/rocketdock-recreation-notes.md`](docs/rocketdock-recreation-notes.md)
-- Instalador original de referencia: `RocketDock-v1.3.5.exe`
-- Extracao local do instalador: `_reference/RocketDock-1.3.5/app`
-- Ferramenta local usada para extrair Inno Setup: `_tools/innoextract-1.9-windows/innoextract.exe`
+## Tune The Dock
 
-## Direcao recomendada
+Right-click the dock and open **Dock settings**.
 
-Implementar um clone clean-room: usar comportamento, formatos e documentacao como referencia, mas escrever codigo novo e evitar reutilizar codigo/assets do RocketDock em uma distribuicao nova ate a licenca ser decidida.
+- **General:** dock name, language, startup, locking, auto-hide, Windows button, Recycle Bin, native taskbar hiding, import behavior, and managed dock folder.
+- **Icons:** size, opacity, labels, spacing, bottom margin, quality, hover magnification, magnification range, and animated GIF items.
+- **Position:** monitor, screen edge, layering, width, height, edge distance, and center offset.
+- **Style:** themes, background opacity, dock radius, icon tile radius, font, font size, and label color.
+- **Behavior:** minimized-window items, running indicators, existing-instance activation, and mouseover popup.
 
-Primeiro MVP:
+Settings are saved to disk and reflected in the live dock immediately.
 
-1. Janela transparente sem borda ancorada na borda da tela.
-2. Itens de arquivo/pasta/separador/lixeira/configuracoes/sair.
-3. Drag-and-drop e menu de contexto para adicionar, reordenar e remover.
-4. Importador de skins `background.ini` e `separator.ini` (pendente).
-5. Launch por `ShellExecuteEx`, auto-hide, topmost e hotkey `Ctrl+Alt+R`.
-6. Indicador de app em execucao para `.exe`/`.lnk` e abertura de instancia existente quando ha janela visivel.
-7. Minimizacao de janelas e previews DWM depois do dock basico estar solido.
+## Data Contract
 
-Estado atual adicional:
+Rock ET Dock is intentionally per-user:
 
-- Barras novas ja nascem com botao Windows, lixeira, configuracoes e sair.
-- `Ctrl+Alt+R` oculta/exibe todas as barras abertas.
-- Operacoes de mover/copiar itens gerenciados e criar/ler atalhos ficam centralizadas nos servicos, para evitar regras duplicadas entre importacao, exportacao e runtime.
-- Ainda ficam fora desta etapa: previews DWM, docklets legados e renderizacao fiel de skins antigas com 9-slice.
+- Configuration: `%LOCALAPPDATA%\Rock ET Dock\dock.config.json`
+- Runtime log: `%LOCALAPPDATA%\Rock ET Dock\logs\runtime.log`
+- Managed dock root: `%USERPROFILE%\Rock ET Dock`
+- Managed folder per dock: `%USERPROFILE%\Rock ET Dock\<dock-name>`
+
+When you drop a file or folder onto the dock, Rock ET Dock either moves it into the managed dock folder or creates a shortcut there, depending on the selected import mode. That keeps dock-owned content predictable and easy to back up.
+
+## Build From Source
+
+Requirements:
+
+- Windows
+- .NET 10 SDK
+- PowerShell
+- Inno Setup 6, only when building the installer
+
+```powershell
+dotnet build Dock.slnx -v minimal
+dotnet run --project src\Dock.App\Dock.App.csproj
+dotnet run --project tests\Dock.GeometryChecks\Dock.GeometryChecks.csproj
+powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
+```
+
+The installer is written to `artifacts\installer`.
+
+## Clean-Room Line
+
+RocketDock is used as behavior reference only. Rock ET Dock is new WPF code, with project-owned runtime assets and its own configuration model. Research notes live in [`docs/rocketdock-recreation-notes.md`](docs/rocketdock-recreation-notes.md).

@@ -45,6 +45,8 @@ ValidateNeighborZoomScale();
 ValidateHoverZoomOffsets();
 ValidateCustomBarGeometry();
 ValidatePlaceholderIsGapOnly();
+ValidateLocalization();
+ValidateVerticalDockGeometryAndOrientation();
 
 Console.WriteLine("Dock geometry checks passed for Top, Bottom, Left and Right.");
 Console.WriteLine("Dock reorder checks passed.");
@@ -56,6 +58,8 @@ Console.WriteLine("Dock neighbor zoom checks passed.");
 Console.WriteLine("Dock hover zoom offset checks passed.");
 Console.WriteLine("Dock custom bar sizing checks passed.");
 Console.WriteLine("Dock placeholder gap checks passed.");
+Console.WriteLine("Dock localization checks passed.");
+Console.WriteLine("Dock vertical edge checks passed.");
 
 void Validate(DockEdge edge, DockPlacement placement)
 {
@@ -447,6 +451,79 @@ void ValidatePlaceholderIsGapOnly()
     });
 
     AssertTrue(placeholder.ContentVisibility == System.Windows.Visibility.Collapsed, "drop placeholder should render as empty gap");
+}
+
+void ValidateLocalization()
+{
+    var english = TextCatalog.Get("en-US");
+    var portuguese = TextCatalog.Get("pt-BR");
+
+    AssertTrue(english["SettingsClose"] == "Close", "English settings label");
+    AssertTrue(portuguese["SettingsClose"] == "Fechar", "Brazilian Portuguese settings label");
+    AssertTrue(TextCatalog.NormalizeLanguage("missing") == TextCatalog.English, "unknown languages should fall back to English");
+
+    var bar = new DockBarSettings
+    {
+        Items =
+        [
+            DockItem.CreateRecycleBin(),
+            DockItem.CreateDockSettings(),
+            DockItem.CreateQuit()
+        ]
+    };
+
+    var viewModel = new DockBarViewModel(bar, TextCatalog.English);
+    AssertTrue(viewModel.Items[0].DisplayName == "Recycle Bin", "English recycle bin item label");
+
+    viewModel.SetLanguage(TextCatalog.PortugueseBrazil);
+    AssertTrue(viewModel.Items[0].DisplayName == "Lixeira", "Brazilian Portuguese recycle bin item label");
+}
+
+void ValidateVerticalDockGeometryAndOrientation()
+{
+    var leftBar = new DockBarSettings { Edge = DockEdge.Left, IconSize = 42, IconSpacing = 9 };
+    var rightBar = new DockBarSettings { Edge = DockEdge.Right, IconSize = 42, IconSpacing = 9 };
+    var bottomBar = new DockBarSettings { Edge = DockEdge.Bottom, IconSize = 42, IconSpacing = 9 };
+
+    AssertTrue(new DockBarViewModel(leftBar).Orientation == System.Windows.Controls.Orientation.Vertical, "left dock should use vertical item panel");
+    AssertTrue(new DockBarViewModel(rightBar).Orientation == System.Windows.Controls.Orientation.Vertical, "right dock should use vertical item panel");
+    AssertTrue(new DockBarViewModel(bottomBar).Orientation == System.Windows.Controls.Orientation.Horizontal, "bottom dock should use horizontal item panel");
+
+    var verticalPlacement = DockGeometry.Calculate(new DockGeometryInput(
+        DockEdge.Left,
+        0,
+        0,
+        1920,
+        1040,
+        ItemCount: 10,
+        new DockBarViewModel(leftBar).ItemButtonSize,
+        leftBar.IconSpacing,
+        Overhang: 26,
+        EdgeDistance: 10,
+        CenterOffset: 0,
+        BarWidth: 0,
+        BarHeight: 0));
+
+    AssertTrue(verticalPlacement.ShellHeight > verticalPlacement.ShellWidth, "left dock shell should be taller than wide");
+    AssertTrue(verticalPlacement.WindowHeight > verticalPlacement.WindowWidth, "left dock window should be taller than wide");
+
+    var horizontalPlacement = DockGeometry.Calculate(new DockGeometryInput(
+        DockEdge.Bottom,
+        0,
+        0,
+        1920,
+        1040,
+        ItemCount: 10,
+        new DockBarViewModel(bottomBar).ItemButtonSize,
+        bottomBar.IconSpacing,
+        Overhang: 26,
+        EdgeDistance: 10,
+        CenterOffset: 0,
+        BarWidth: 0,
+        BarHeight: 0));
+
+    AssertTrue(horizontalPlacement.ShellWidth > horizontalPlacement.ShellHeight, "bottom dock shell should be wider than tall");
+    AssertTrue(horizontalPlacement.WindowWidth > horizontalPlacement.WindowHeight, "bottom dock window should be wider than tall");
 }
 
 DockItem CreateItem(string id)

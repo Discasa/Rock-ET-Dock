@@ -1,44 +1,54 @@
 # Changelog
 
-Todas as mudancas relevantes deste projeto serao documentadas aqui.
+All notable changes to this project are documented here.
+
+## 0.3.0 - 2026-05-13
+
+- Translated the application code surface and project documentation to English.
+- Added an immediate language selector for English and Brazilian Portuguese in the settings window.
+- Centralized UI text in a language catalog instead of spreading hardcoded labels through windows and menus.
+- Localized dock settings, context menus, dialogs, enum labels, and built-in special item labels.
+- Fixed side-edge docks so Left and Right render as true vertical docks with stacked upright icons.
+- Reworked the README with release-oriented copy, icon branding, and screenshot sections.
+- Updated packaging metadata to version `0.3.0`.
 
 ## 0.2.2 - 2026-05-13
 
-- Definida versao do app como `0.2.2`.
-- Ajustado `installer/build-installer.ps1` para gerar somente o instalador oficial.
-- Atualizada a documentacao para evitar distribuicao do pacote zip manual.
+- Set the app version to `0.2.2`.
+- Adjusted `installer/build-installer.ps1` to generate only the official installer.
+- Updated documentation to avoid distributing a manual zip package.
 
 ## 0.2.1 - 2026-05-13
 
-- Adicionado script de instalador Inno Setup/ISCC em `installer/RockETDock.iss`.
-- Adicionado helper `installer/build-installer.ps1` para publicar, empacotar e compilar o instalador.
-- Definida versao do app como `0.2.1` para a release com instalador.
-- Documentado comando de compilacao do instalador.
+- Added the Inno Setup/ISCC installer script at `installer/RockETDock.iss`.
+- Added `installer/build-installer.ps1` to publish, package, and compile the installer.
+- Set the app version to `0.2.1` for the installer release.
+- Documented the installer build command.
 
 ## 0.2.0 - 2026-05-13
 
-- Refatoradas operacoes de mover/copiar arquivos e pastas para `ManagedPathService`.
-- Extraida criacao/resolucao de atalhos `.lnk` para `ShellShortcutService`.
-- Adicionada hotkey global `Ctrl+Alt+R` para ocultar/exibir todas as barras abertas.
-- Adicionados indicadores de app aberto e tentativa de abrir instancia existente para itens `.exe` e atalhos `.lnk` resolviveis.
-- Adicionados itens especiais persistentes de separador, configuracoes e sair.
-- Adicionado menu de contexto para incluir arquivo, pasta, separador, configuracoes e sair.
-- Barras novas agora iniciam com botao Windows, lixeira, configuracoes e sair.
-- Removida a logica de aplicacao manual da janela de configuracoes; mudancas agora sao salvas e refletidas imediatamente.
-- Corrigido zoom de hover para deslocar os icones vizinhos e evitar sobreposicao visual.
-- Corrigido controle de GIF para retomar o loop quando o item estiver carregado e visivel.
-- Definida versao do app como `0.2.0` para publicacao inicial.
-- Adicionados checks para itens especiais e mapeamento de executavel.
+- Refactored file and folder move/copy operations into `ManagedPathService`.
+- Extracted `.lnk` shortcut creation and resolution into `ShellShortcutService`.
+- Added the global `Ctrl+Alt+R` hotkey to hide or show all open docks.
+- Added running-app indicators and best-effort existing-instance activation for resolvable `.exe` items and `.lnk` shortcuts.
+- Added persistent special items for separators, Settings, and Exit.
+- Added a context menu for adding files, folders, separators, Settings, and Exit.
+- New docks now start with Windows button, Recycle Bin, Settings, and Exit.
+- Removed the manual Apply flow from the settings window; changes are saved and reflected immediately.
+- Fixed hover zoom so neighboring icons move aside instead of overlapping visually.
+- Fixed animated GIF playback so GIF items resume looping when loaded and visible.
+- Set the app version to `0.2.0` for the initial public release.
+- Added checks for special items and executable mapping.
 
 ## 0.1.0 - 2026-05-13
 
-- Criado app WPF inicial do Rock ET Dock.
-- Adicionada barra transparente com posicionamento em quatro bordas.
-- Adicionados itens de arquivo, pasta, link, GIF animado, botao Windows e lixeira.
-- Adicionado drag-and-drop para importar, reordenar, exportar para a area de trabalho e remover itens.
-- Adicionada janela de configuracoes com aplicacao imediata.
-- Adicionadas configuracoes de tamanho de icone, zoom, alcance, opacidade, espacamento, margens, largura, altura, posicionamento e temas.
-- Adicionado hover com ampliacao suave por interpolacao.
-- Adicionado suporte inicial a multiplas barras.
-- Adicionados checks executaveis de geometria, reorder, importacao/exportacao, placeholder e sizing.
-- Documentada a pesquisa clean-room sobre RocketDock em `docs/rocketdock-recreation-notes.md`.
+- Created the initial WPF Rock ET Dock app.
+- Added a transparent borderless dock with positioning on all four screen edges.
+- Added file, folder, link, animated GIF, Windows button, and Recycle Bin items.
+- Added drag-and-drop to import, reorder, export to desktop, and remove items.
+- Added the settings window with immediate application.
+- Added settings for icon size, zoom, zoom range, opacity, spacing, margins, width, height, positioning, and themes.
+- Added smooth hover magnification through interpolation.
+- Added initial multi-dock support.
+- Added executable checks for geometry, reorder, import/export, placeholder, and sizing behavior.
+- Documented clean-room RocketDock research in `docs/rocketdock-recreation-notes.md`.

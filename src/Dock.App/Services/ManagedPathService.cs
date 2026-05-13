@@ -17,7 +17,7 @@ public static class ManagedPathService
         if (Directory.Exists(sourceFullPath) &&
             IsPathInsideDirectory(targetFullDirectory, sourceFullPath))
         {
-            throw new InvalidOperationException("Nao e possivel mover uma pasta para dentro dela mesma.");
+            throw new InvalidOperationException("A folder cannot be moved into itself.");
         }
 
         Directory.CreateDirectory(targetDirectory);

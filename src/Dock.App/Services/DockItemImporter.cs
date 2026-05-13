@@ -54,7 +54,7 @@ public sealed class DockItemImporter
 
         if (!Path.GetExtension(sourceFullPath).Equals(".gif", StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("Selecione um arquivo .gif.");
+            throw new InvalidOperationException("Select a .gif file.");
         }
 
         var gifFolder = Path.Combine(UserPaths.EnsureBarFolder(bar.Name), "gifs");

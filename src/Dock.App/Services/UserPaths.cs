@@ -49,7 +49,7 @@ public static class UserPaths
     {
         var invalid = Path.GetInvalidFileNameChars();
         var safe = new string(value.Select(ch => invalid.Contains(ch) ? '_' : ch).ToArray()).Trim();
-        return string.IsNullOrWhiteSpace(safe) ? "Barra" : safe;
+        return string.IsNullOrWhiteSpace(safe) ? "Dock" : safe;
     }
 
     private static string? GetPathOverride(string variableName)

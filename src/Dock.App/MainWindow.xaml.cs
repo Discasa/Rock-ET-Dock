@@ -69,7 +69,7 @@ public partial class MainWindow : Window
     {
         _store = store;
         _bar = bar;
-        _viewModel = new DockBarViewModel(bar);
+        _viewModel = new DockBarViewModel(bar, store.Current.App.Language);
 
         InitializeComponent();
 
@@ -1475,48 +1475,49 @@ public partial class MainWindow : Window
 
     private System.Windows.Controls.ContextMenu BuildContextMenu()
     {
+        var text = TextCatalog.Get(_store.Current.App.Language);
         var menu = new System.Windows.Controls.ContextMenu();
 
-        menu.Items.Add(CreateMenuItem("Configuracoes da barra", (_, _) => OpenSettings()));
+        menu.Items.Add(CreateMenuItem(text["MenuDockSettings"], (_, _) => OpenSettings()));
         menu.Items.Add(new System.Windows.Controls.Separator());
 
-        var addMenu = new System.Windows.Controls.MenuItem { Header = "Adicionar item" };
-        addMenu.Items.Add(CreateMenuItem("Arquivo...", (_, _) => AddFilesFromDialog()));
-        addMenu.Items.Add(CreateMenuItem("Pasta...", (_, _) => AddFolderFromDialog()));
-        addMenu.Items.Add(CreateMenuItem("Separador", (_, _) => AddPersistentItem(DockItem.CreateSeparator())));
-        addMenu.Items.Add(CreateMenuItem("Configuracoes", (_, _) => AddPersistentItem(DockItem.CreateDockSettings())));
-        addMenu.Items.Add(CreateMenuItem("Sair", (_, _) => AddPersistentItem(DockItem.CreateQuit())));
+        var addMenu = new System.Windows.Controls.MenuItem { Header = text["MenuAddItem"] };
+        addMenu.Items.Add(CreateMenuItem(text["MenuFile"], (_, _) => AddFilesFromDialog()));
+        addMenu.Items.Add(CreateMenuItem(text["MenuFolder"], (_, _) => AddFolderFromDialog()));
+        addMenu.Items.Add(CreateMenuItem(text["MenuSeparator"], (_, _) => AddPersistentItem(DockItem.CreateSeparator(text["ItemSeparator"]))));
+        addMenu.Items.Add(CreateMenuItem(text["MenuSettings"], (_, _) => AddPersistentItem(DockItem.CreateDockSettings(text["ItemSettings"]))));
+        addMenu.Items.Add(CreateMenuItem(text["MenuExit"], (_, _) => AddPersistentItem(DockItem.CreateQuit(text["ItemExit"]))));
         menu.Items.Add(addMenu);
 
         menu.Items.Add(new System.Windows.Controls.Separator());
 
-        menu.Items.Add(CreateMenuItem("Abrir pasta da barra", (_, _) =>
+        menu.Items.Add(CreateMenuItem(text["MenuOpenDockFolder"], (_, _) =>
         {
             DockLauncher.Open(new DockItem { TargetPath = UserPaths.EnsureBarFolder(_bar.Name) });
         }));
 
         menu.Items.Add(new System.Windows.Controls.Separator());
 
-        var createMenu = new System.Windows.Controls.MenuItem { Header = "Criar nova barra" };
-        createMenu.Items.Add(CreateMenuItem("Esquerda", (_, _) => CurrentApp.CreateBar(DockEdge.Left)));
-        createMenu.Items.Add(CreateMenuItem("Direita", (_, _) => CurrentApp.CreateBar(DockEdge.Right)));
-        createMenu.Items.Add(CreateMenuItem("Topo", (_, _) => CurrentApp.CreateBar(DockEdge.Top)));
-        createMenu.Items.Add(CreateMenuItem("Rodape", (_, _) => CurrentApp.CreateBar(DockEdge.Bottom)));
+        var createMenu = new System.Windows.Controls.MenuItem { Header = text["MenuCreateNewDock"] };
+        createMenu.Items.Add(CreateMenuItem(text.LabelFor(DockEdge.Left), (_, _) => CurrentApp.CreateBar(DockEdge.Left)));
+        createMenu.Items.Add(CreateMenuItem(text.LabelFor(DockEdge.Right), (_, _) => CurrentApp.CreateBar(DockEdge.Right)));
+        createMenu.Items.Add(CreateMenuItem(text.LabelFor(DockEdge.Top), (_, _) => CurrentApp.CreateBar(DockEdge.Top)));
+        createMenu.Items.Add(CreateMenuItem(text.LabelFor(DockEdge.Bottom), (_, _) => CurrentApp.CreateBar(DockEdge.Bottom)));
         menu.Items.Add(createMenu);
 
         menu.Items.Add(new System.Windows.Controls.Separator());
 
-        var positionMenu = new System.Windows.Controls.MenuItem { Header = "Mover esta barra" };
-        positionMenu.Items.Add(CreateMenuItem("Esquerda", (_, _) => ChangeEdge(DockEdge.Left)));
-        positionMenu.Items.Add(CreateMenuItem("Direita", (_, _) => ChangeEdge(DockEdge.Right)));
-        positionMenu.Items.Add(CreateMenuItem("Topo", (_, _) => ChangeEdge(DockEdge.Top)));
-        positionMenu.Items.Add(CreateMenuItem("Rodape", (_, _) => ChangeEdge(DockEdge.Bottom)));
+        var positionMenu = new System.Windows.Controls.MenuItem { Header = text["MenuMoveDock"] };
+        positionMenu.Items.Add(CreateMenuItem(text.LabelFor(DockEdge.Left), (_, _) => ChangeEdge(DockEdge.Left)));
+        positionMenu.Items.Add(CreateMenuItem(text.LabelFor(DockEdge.Right), (_, _) => ChangeEdge(DockEdge.Right)));
+        positionMenu.Items.Add(CreateMenuItem(text.LabelFor(DockEdge.Top), (_, _) => ChangeEdge(DockEdge.Top)));
+        positionMenu.Items.Add(CreateMenuItem(text.LabelFor(DockEdge.Bottom), (_, _) => ChangeEdge(DockEdge.Bottom)));
         menu.Items.Add(positionMenu);
 
         menu.Items.Add(new System.Windows.Controls.Separator());
 
-        menu.Items.Add(CreateMenuItem("Remover esta barra", (_, _) => CurrentApp.RemoveBar(this, _bar)));
-        menu.Items.Add(CreateMenuItem("Sair", (_, _) => CurrentApp.ExitAll()));
+        menu.Items.Add(CreateMenuItem(text["MenuRemoveDock"], (_, _) => CurrentApp.RemoveBar(this, _bar)));
+        menu.Items.Add(CreateMenuItem(text["MenuExit"], (_, _) => CurrentApp.ExitAll()));
         menu.Opened += (_, _) => addMenu.IsEnabled = !_bar.LockItems;
 
         return menu;
@@ -1524,10 +1525,11 @@ public partial class MainWindow : Window
 
     private void AddFilesFromDialog()
     {
+        var text = TextCatalog.Get(_store.Current.App.Language);
         var dialog = new OpenFileDialog
         {
-            Title = "Adicionar arquivos",
-            Filter = "Todos os arquivos (*.*)|*.*",
+            Title = text["DialogAddFilesTitle"],
+            Filter = text["DialogAddFilesFilter"],
             Multiselect = true
         };
 
@@ -1539,9 +1541,10 @@ public partial class MainWindow : Window
 
     private void AddFolderFromDialog()
     {
+        var text = TextCatalog.Get(_store.Current.App.Language);
         using var dialog = new Forms.FolderBrowserDialog
         {
-            Description = "Selecione a pasta para adicionar ao dock",
+            Description = text["DialogAddFolderDescription"],
             UseDescriptionForTitle = true
         };
 
@@ -1755,7 +1758,9 @@ public partial class MainWindow : Window
         Title = $"{UserPaths.AppName} - {_bar.Name}";
         Topmost = _bar.Layering == DockLayering.TopMost;
         DockShell.AllowDrop = !_bar.LockItems;
+        ContextMenu = BuildContextMenu();
         ConfigureHideTimers();
+        _viewModel.SetLanguage(_store.Current.App.Language);
         _viewModel.SyncPersistentItemsFromSettings();
         RenderOptions.SetBitmapScalingMode(DockItemsControl, _bar.IconQuality switch
         {

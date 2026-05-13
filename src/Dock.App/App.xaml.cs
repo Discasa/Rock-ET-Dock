@@ -42,13 +42,14 @@ public partial class App : System.Windows.Application
         }
 
         var configuration = _store.Current;
+        var text = TextCatalog.Get(configuration.App.Language);
         var baseName = edge switch
         {
-            DockEdge.Left => "Barra Esquerda",
-            DockEdge.Right => "Barra Direita",
-            DockEdge.Top => "Barra Superior",
-            DockEdge.Bottom => "Barra Inferior",
-            _ => "Barra"
+            DockEdge.Left => text["BarLeft"],
+            DockEdge.Right => text["BarRight"],
+            DockEdge.Top => text["BarTop"],
+            DockEdge.Bottom => text["BarBottom"],
+            _ => text["BarGeneric"]
         };
 
         var bar = DockBarSettings.Create(GetUniqueBarName(configuration, baseName), edge);

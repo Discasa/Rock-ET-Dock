@@ -37,6 +37,8 @@ public sealed class DockConfigurationStore
             Save();
         }
 
+        Current.App.Language = TextCatalog.NormalizeLanguage(Current.App.Language);
+
         foreach (var bar in Current.Bars)
         {
             UserPaths.EnsureBarFolder(bar.Name);
@@ -58,18 +60,19 @@ public sealed class DockConfigurationStore
         {
             Bars =
             [
-                CreateDefaultBar("Principal")
+                CreateDefaultBar("Main")
             ]
         };
     }
 
     private static DockBarSettings CreateDefaultBar(string name)
     {
+        var text = TextCatalog.Get(TextCatalog.English);
         var bar = DockBarSettings.Create(name, DockEdge.Bottom);
         bar.Items.Add(DockItem.CreateWindowsButton());
-        bar.Items.Add(DockItem.CreateRecycleBin());
-        bar.Items.Add(DockItem.CreateDockSettings());
-        bar.Items.Add(DockItem.CreateQuit());
+        bar.Items.Add(DockItem.CreateRecycleBin(text["ItemRecycleBin"]));
+        bar.Items.Add(DockItem.CreateDockSettings(text["ItemSettings"]));
+        bar.Items.Add(DockItem.CreateQuit(text["ItemExit"]));
         return bar;
     }
 }

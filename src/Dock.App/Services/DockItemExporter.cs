@@ -12,13 +12,13 @@ public sealed class DockItemExporter
             item.IsRuntime ||
             string.IsNullOrWhiteSpace(item.TargetPath))
         {
-            throw new InvalidOperationException("Este item nao pode ser movido para a area de trabalho.");
+            throw new InvalidOperationException("This item cannot be moved to the desktop.");
         }
 
         var sourcePath = Path.GetFullPath(item.TargetPath);
         if (!File.Exists(sourcePath) && !Directory.Exists(sourcePath))
         {
-            throw new FileNotFoundException("O item real nao existe mais.", sourcePath);
+            throw new FileNotFoundException("The backing item no longer exists.", sourcePath);
         }
 
         var desktop = UserPaths.DesktopDirectory;

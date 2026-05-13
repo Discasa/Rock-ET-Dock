@@ -1,46 +1,48 @@
-# Rock ET Dock - Documentacao
+# Rock ET Dock - Documentation
 
-Rock ET Dock e um dock/app launcher para Windows criado em WPF. O projeto recria comportamentos de dock classico por implementacao limpa, sem depender dos binarios antigos do RocketDock em runtime.
+Rock ET Dock is a WPF Windows dock and app launcher. It recreates classic dock behavior through a clean-room implementation and does not depend on RocketDock binaries at runtime.
 
-## Estrutura
+## Repository Layout
 
-- `Dock.slnx`: solucao .NET.
-- `src/Dock.App`: aplicativo WPF principal.
-- `tests/Dock.GeometryChecks`: checks executaveis de geometria, reorder, importacao/exportacao e configuracoes.
-- `assets`: assets proprios do projeto.
-- `docs`: notas de pesquisa e requisitos.
+- `Dock.slnx`: .NET solution.
+- `src/Dock.App`: main WPF application.
+- `tests/Dock.GeometryChecks`: executable checks for geometry, sizing, reorder, import/export, and configuration behavior.
+- `assets`: project-owned images and README assets.
+- `docs`: research notes and implementation requirements.
+- `installer`: Inno Setup packaging script and PowerShell build helper.
 
-Pastas locais de referencia como `_reference` e `_tools`, alem do instalador original `RocketDock-v1.3.5.exe`, ficam fora do Git.
+Local reference folders such as `_reference` and `_tools`, plus the original `RocketDock-v1.3.5.exe` reference installer, are intentionally outside Git.
 
-## Requisitos
+## Requirements
 
 - Windows.
 - .NET 10 SDK.
-- PowerShell ou terminal equivalente.
+- PowerShell or an equivalent terminal.
+- Inno Setup 6 to build the installer.
 
-## Comandos
+## Commands
 
 ```powershell
-dotnet build Dock.slnx
+dotnet build Dock.slnx -v minimal
 dotnet run --project src\Dock.App\Dock.App.csproj
 dotnet run --project tests\Dock.GeometryChecks\Dock.GeometryChecks.csproj
 powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
 ```
 
-Tambem existe `run.bat` para iniciar o app a partir da raiz do projeto.
+`run.bat` also starts the app from the repository root.
 
-O artefato oficial de distribuicao e o instalador gerado em `artifacts\installer`. A pasta publicada em `artifacts\publish` e apenas entrada intermediaria do instalador.
+The official distribution artifact is the installer under `artifacts\installer`. The publish folder under `artifacts\publish` is an intermediate input for the installer.
 
-## Dados do usuario
+## User Data
 
-O app salva tudo por usuario:
+The app stores data per user:
 
-- Configuracao: `%LOCALAPPDATA%\Rock ET Dock\dock.config.json`
+- Configuration: `%LOCALAPPDATA%\Rock ET Dock\dock.config.json`
 - Logs: `%LOCALAPPDATA%\Rock ET Dock\logs\runtime.log`
-- Pasta raiz gerenciada: `%USERPROFILE%\Rock ET Dock`
-- Pasta de cada barra: `%USERPROFILE%\Rock ET Dock\<nome-da-barra>`
+- Managed dock root: `%USERPROFILE%\Rock ET Dock`
+- Managed folder for each dock: `%USERPROFILE%\Rock ET Dock\<dock-name>`
 
-Para smoke tests sem tocar no perfil real, use:
+For smoke tests without touching the real user profile:
 
 ```powershell
 $env:ROCK_ET_DOCK_LOCALAPPDATA = "$env:TEMP\rock-et-dock-local"
@@ -48,39 +50,57 @@ $env:ROCK_ET_DOCK_USERPROFILE = "$env:TEMP\rock-et-dock-profile"
 dotnet run --project src\Dock.App\Dock.App.csproj
 ```
 
-## Funcionalidades atuais
+## Current Features
 
-- Multiplas barras por instancia.
-- Posicionamento em topo, rodape, esquerda e direita.
-- Configuracoes de tamanho, zoom, alcance de zoom, opacidade, espacamento e margens.
-- Configuracoes de largura, altura, distancia da borda, centralizacao e layering.
-- Temas inspirados nos nomes de skins de referencia, com estilos proprios.
-- Sliders de arredondamento separados para a barra e fundo dos icones.
-- Drag-and-drop para adicionar, reordenar e remover itens.
-- Menu de contexto para adicionar arquivos, pastas, separadores, configuracoes e sair.
-- Botao Windows com menu Iniciar no clique esquerdo e menu Win+X no clique direito.
-- Lixeira com menu nativo e drop de arquivos.
-- Opcao para esconder a barra nativa do Windows enquanto o app estiver aberto.
-- Itens temporarios de janelas minimizadas.
-- Hotkey global `Ctrl+Alt+R` para ocultar/exibir todas as barras abertas.
-- Indicador de app aberto e abertura de instancia existente para itens `.exe` e atalhos `.lnk` resolviveis.
+- Multiple docks managed by one app instance.
+- Top, bottom, left, and right positioning, with vertical item layout on the left and right edges.
+- Fine-grained settings for icon size, hover zoom, zoom range, opacity, spacing, margins, width, height, edge distance, center offset, and layering.
+- Built-in themes inspired by reference skin names, implemented with project-owned colors and shapes.
+- Separate corner-radius controls for the dock shell and icon tile backgrounds.
+- Drag-and-drop to add, reorder, remove, and export items.
+- Context menu to add files, folders, separators, Settings, and Exit items.
+- Windows button with native Start menu on left-click and native Win+X menu on right-click.
+- Recycle Bin item with native context menu and file-drop deletion.
+- Option to hide the native Windows taskbar while the app is running.
+- Temporary items for minimized windows.
+- Global `Ctrl+Alt+R` hotkey to hide or show all open docks.
+- Running-app indicators and existing-instance activation for resolvable `.exe` items and `.lnk` shortcuts.
+- Animated GIF dock items that loop while visible.
+- Immediate settings application, including language switching between English and Brazilian Portuguese.
 
-## Decisoes de implementacao
+## Implementation Decisions
 
-- O projeto e clean-room: comportamento e formatos foram documentados, mas codigo e assets de runtime sao proprios.
-- Arquivos soltos na barra sao movidos ou referenciados por atalhos dentro da pasta gerenciada da barra, conforme a configuracao.
-- A regra de mover/copiar entradas do sistema de arquivos fica centralizada em `ManagedPathService`; criacao e resolucao de atalhos ficam em `ShellShortcutService`.
-- A janela de configuracoes salva e reflete mudancas imediatamente para permitir visualizar a barra enquanto se ajusta.
-- O zoom usa interpolacao por frame para reduzir saltos visuais durante hover.
-- Indicadores de execucao usam mapeamento best-effort por caminho de executavel. Documentos, URLs, apps modernos/UWP e comandos indiretos podem nao ser associados a uma janela existente.
+- The project is clean-room: behavior and formats are documented, but runtime code and assets are project-owned.
+- Dropped files are either moved into the managed dock folder or referenced through shortcuts in that folder, depending on the configured import mode.
+- File-system move/copy rules are centralized in `ManagedPathService`; shortcut creation and resolution are centralized in `ShellShortcutService`.
+- Special shell-backed items stay separate from normal file-system items. Recycle Bin and Windows button behavior uses dedicated services.
+- The settings window saves and reflects changes immediately so the user can tune the live dock.
+- Hover zoom uses frame interpolation and layout offsets so neighboring icons move aside instead of overlapping.
+- Running indicators use best-effort executable-path matching. Documents, URLs, modern/UWP apps, and indirect commands may not map to an existing visible window.
 
-## Validacao
+## Packaging
 
-Antes de publicar mudancas, rode:
+The installer is built with Inno Setup:
 
 ```powershell
-dotnet build Dock.slnx
+powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
+```
+
+The helper publishes the WPF app as a self-contained Windows x64 build, copies the root documentation into the publish folder, and then invokes `ISCC.exe`. The generated installer is:
+
+```text
+artifacts\installer\Rock-ET-Dock-Setup-<version>-win-x64.exe
+```
+
+The project does not publish a portable zip to avoid confusing users with multiple install paths.
+
+## Validation
+
+Before publishing changes, run:
+
+```powershell
+dotnet build Dock.slnx -v minimal
 dotnet run --project tests\Dock.GeometryChecks\Dock.GeometryChecks.csproj
 ```
 
-Evite rodar build e checks em paralelo, porque a geracao WPF pode disputar arquivos temporarios em `obj`.
+Avoid running build and checks in parallel because WPF generation can contend over temporary files in `obj`.

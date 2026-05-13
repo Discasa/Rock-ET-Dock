@@ -1,6 +1,6 @@
 #define AppName "Rock ET Dock"
 #ifndef AppVersion
-#define AppVersion "0.2.2"
+#define AppVersion "0.3.0"
 #endif
 #define AppPublisher "Discasa"
 #define AppExeName "Rock ET Dock.exe"
@@ -32,9 +32,6 @@ ArchitecturesInstallIn64BitMode=x64compatible
 CloseApplications=yes
 RestartApplications=no
 
-[Languages]
-Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
-
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
@@ -43,7 +40,7 @@ Source: "..\artifacts\publish\{#PackageName}\*"; DestDir: "{app}"; Flags: ignore
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"
-Name: "{group}\Desinstalar {#AppName}"; Filename: "{uninstallexe}"
+Name: "{group}\Uninstall {#AppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desktopicon
 
 [Run]

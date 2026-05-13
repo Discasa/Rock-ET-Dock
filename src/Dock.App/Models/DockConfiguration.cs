@@ -16,7 +16,7 @@ public sealed class ApplicationSettings
 {
     public string DisplayName { get; set; } = "Rock ET Dock";
 
-    public string Language { get; set; } = "pt-BR";
+    public string Language { get; set; } = "en-US";
 
     public bool RunAtStartup { get; set; }
 
@@ -39,7 +39,7 @@ public sealed class DockBarSettings
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
-    public string Name { get; set; } = "Principal";
+    public string Name { get; set; } = "Main";
 
     public DockEdge Edge { get; set; } = DockEdge.Bottom;
 
@@ -146,13 +146,13 @@ public sealed class DockItem
         };
     }
 
-    public static DockItem CreateRecycleBin()
+    public static DockItem CreateRecycleBin(string? displayName = null)
     {
         return new DockItem
         {
             Id = "recycle-bin",
             Kind = DockItemKind.RecycleBin,
-            DisplayName = "Lixeira",
+            DisplayName = displayName ?? "Recycle Bin",
             TargetPath = "shell:RecycleBinFolder"
         };
     }
@@ -168,30 +168,30 @@ public sealed class DockItem
         };
     }
 
-    public static DockItem CreateSeparator()
+    public static DockItem CreateSeparator(string? displayName = null)
     {
         return new DockItem
         {
             Kind = DockItemKind.Separator,
-            DisplayName = "Separador"
+            DisplayName = displayName ?? "Separator"
         };
     }
 
-    public static DockItem CreateDockSettings()
+    public static DockItem CreateDockSettings(string? displayName = null)
     {
         return new DockItem
         {
             Kind = DockItemKind.DockSettings,
-            DisplayName = "Configuracoes"
+            DisplayName = displayName ?? "Settings"
         };
     }
 
-    public static DockItem CreateQuit()
+    public static DockItem CreateQuit(string? displayName = null)
     {
         return new DockItem
         {
             Kind = DockItemKind.Quit,
-            DisplayName = "Sair"
+            DisplayName = displayName ?? "Exit"
         };
     }
 }

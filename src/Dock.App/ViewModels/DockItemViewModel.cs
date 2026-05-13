@@ -10,12 +10,14 @@ namespace Dock.App.ViewModels;
 
 public sealed class DockItemViewModel : INotifyPropertyChanged
 {
+    private LocalizedText _text;
     private bool _isBeingDragged;
     private bool _isRunning;
 
-    public DockItemViewModel(DockItem item)
+    public DockItemViewModel(DockItem item, LocalizedText? text = null)
     {
         Item = item;
+        _text = text ?? TextCatalog.Get(TextCatalog.English);
         Icon = item.Kind switch
         {
             DockItemKind.WindowsButton => SpecialIconService.GetWindowsLogo(),
@@ -31,11 +33,19 @@ public sealed class DockItemViewModel : INotifyPropertyChanged
 
     public DockItem Item { get; }
 
-    public string DisplayName => Item.DisplayName;
+    public string DisplayName => Item.Kind switch
+    {
+        DockItemKind.WindowsButton => _text["ItemWindows"],
+        DockItemKind.RecycleBin => _text["ItemRecycleBin"],
+        DockItemKind.Separator => _text["ItemSeparator"],
+        DockItemKind.DockSettings => _text["ItemSettings"],
+        DockItemKind.Quit => _text["ItemExit"],
+        _ => Item.DisplayName
+    };
 
-    public string ShortLabel => Item.DisplayName.Length <= 12
-        ? Item.DisplayName
-        : Item.DisplayName[..12];
+    public string ShortLabel => DisplayName.Length <= 12
+        ? DisplayName
+        : DisplayName[..12];
 
     public ImageSource Icon { get; }
 
@@ -98,6 +108,13 @@ public sealed class DockItemViewModel : INotifyPropertyChanged
     public double DragOpacity => IsBeingDragged ? 0.0 : 1.0;
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    public void SetText(LocalizedText text)
+    {
+        _text = text;
+        OnPropertyChanged(nameof(DisplayName));
+        OnPropertyChanged(nameof(ShortLabel));
+    }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {

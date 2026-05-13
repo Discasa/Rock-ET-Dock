@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "0.2.2"
+    [string]$Version = "0.3.0"
 )
 
 $ErrorActionPreference = "Stop"
@@ -19,7 +19,7 @@ if ($null -eq $iscc) {
 
     $isccPath = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
     if ([string]::IsNullOrWhiteSpace($isccPath)) {
-        throw "ISCC.exe nao encontrado. Instale Inno Setup 6 antes de gerar o instalador."
+        throw "ISCC.exe was not found. Install Inno Setup 6 before generating the installer."
     }
 } else {
     $isccPath = $iscc.Source

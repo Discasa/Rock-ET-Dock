@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media;
 using Dock.App.Models;
+using Dock.App.Services;
 
 namespace Dock.App.ViewModels;
 
@@ -50,10 +51,13 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
         "Alien Milk"
     ];
 
-    public DockBarViewModel(DockBarSettings bar)
+    private LocalizedText _text;
+
+    public DockBarViewModel(DockBarSettings bar, string? language = null)
     {
         Bar = bar;
-        Items = new ObservableCollection<DockItemViewModel>(bar.Items.Select(static item => new DockItemViewModel(item)));
+        _text = TextCatalog.Get(language);
+        Items = new ObservableCollection<DockItemViewModel>(bar.Items.Select(item => new DockItemViewModel(item, _text)));
     }
 
     public DockBarSettings Bar { get; }
@@ -174,13 +178,13 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
     public void AddItem(DockItem item)
     {
         Bar.Items.Add(item);
-        Items.Add(new DockItemViewModel(item));
+        Items.Add(new DockItemViewModel(item, _text));
     }
 
     public void InsertItem(int index, DockItem item)
     {
         var insertIndex = Clamp(index, 0, Items.Count);
-        Items.Insert(insertIndex, new DockItemViewModel(item));
+        Items.Insert(insertIndex, new DockItemViewModel(item, _text));
         PersistVisualOrder();
     }
 
@@ -192,7 +196,7 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
             Items.Remove(existing);
         }
 
-        Items.Add(new DockItemViewModel(item));
+        Items.Add(new DockItemViewModel(item, _text));
     }
 
     public bool RemoveRuntimeWindow(long nativeWindowHandle)
@@ -220,12 +224,12 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
         Items.Clear();
         foreach (var item in Bar.Items)
         {
-            Items.Add(new DockItemViewModel(item));
+            Items.Add(new DockItemViewModel(item, _text));
         }
 
         foreach (var item in runtimeItems)
         {
-            Items.Add(new DockItemViewModel(item));
+            Items.Add(new DockItemViewModel(item, _text));
         }
     }
 
@@ -285,7 +289,7 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
                 Kind = DockItemKind.DropPlaceholder,
                 DisplayName = "",
                 IsRuntime = true
-            }));
+            }, _text));
             return true;
         }
 
@@ -381,6 +385,15 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(SeparatorHeight));
         OnPropertyChanged(nameof(ShadowOpacity));
         OnPropertyChanged(nameof(LabelBrush));
+    }
+
+    public void SetLanguage(string? language)
+    {
+        _text = TextCatalog.Get(language);
+        foreach (var item in Items)
+        {
+            item.SetText(_text);
+        }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

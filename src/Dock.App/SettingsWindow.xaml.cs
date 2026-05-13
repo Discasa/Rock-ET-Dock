@@ -26,7 +26,7 @@ public partial class SettingsWindow : Window
         _store = store;
         _bar = bar;
 
-        DataContext = new SettingsWindowText(bar);
+        DataContext = new SettingsWindowText(bar, CurrentText);
         InitializeComponent();
         _isLoadingValues = true;
         LoadValues();
@@ -46,8 +46,6 @@ public partial class SettingsWindow : Window
         WindowsButtonBox.IsChecked = _bar.Items.Any(static item => item.Kind == DockItemKind.WindowsButton);
         RecycleBinBox.IsChecked = _bar.Items.Any(static item => item.Kind == DockItemKind.RecycleBin);
         HideNativeTaskbarBox.IsChecked = app.HideNativeTaskbar;
-        ImportModeBox.ItemsSource = EnumItems<DockImportMode>();
-        ImportModeBox.SelectedValue = _bar.ImportMode;
         AutoHideDelaySlider.Value = _bar.AutoHideDelayMs;
         AutoHideDurationSlider.Value = _bar.AutoHideDurationMs;
         BarFolderBox.Text = UserPaths.EnsureBarFolder(_bar.Name);
@@ -56,15 +54,11 @@ public partial class SettingsWindow : Window
         IconOpacitySlider.Value = _bar.IconOpacity;
         IconSpacingSlider.Value = _bar.IconSpacing;
         IconBottomMarginSlider.Value = _bar.IconBottomMargin;
-        IconQualityBox.ItemsSource = EnumItems<IconQuality>();
-        IconQualityBox.SelectedValue = _bar.IconQuality;
         ZoomEnabledBox.IsChecked = _bar.ZoomEnabled;
         ZoomOpaqueBox.IsChecked = _bar.ZoomOpaque;
         ZoomSizeSlider.Value = _bar.ZoomSize;
         ZoomRangeSlider.Value = _bar.ZoomRange;
         ZoomDurationSlider.Value = _bar.ZoomDurationMs;
-        HoverEffectBox.ItemsSource = EnumItems<HoverEffect>();
-        HoverEffectBox.SelectedValue = _bar.HoverEffect;
 
         MonitorBox.ItemsSource = GetMonitorItems();
         MonitorBox.SelectedValue = _bar.MonitorIndex;
@@ -72,10 +66,6 @@ public partial class SettingsWindow : Window
         {
             MonitorBox.SelectedIndex = 0;
         }
-        EdgeBox.ItemsSource = EnumItems<DockEdge>();
-        EdgeBox.SelectedValue = _bar.Edge;
-        LayeringBox.ItemsSource = EnumItems<DockLayering>();
-        LayeringBox.SelectedValue = _bar.Layering;
         BarWidthSlider.Value = _bar.BarWidth;
         BarHeightSlider.Value = _bar.BarHeight;
         OffsetSlider.Value = _bar.Offset;
@@ -102,6 +92,8 @@ public partial class SettingsWindow : Window
         OpenRunningInstancesBox.IsChecked = app.OpenRunningInstances;
         PopupOnMouseoverBox.IsChecked = app.PopupOnMouseover;
         PopupDelaySlider.Value = app.PopupDelayMs;
+
+        ApplyLocalizedValues();
     }
 
     private void Close_Click(object sender, RoutedEventArgs e)
@@ -111,10 +103,11 @@ public partial class SettingsWindow : Window
 
     private void AddGif_Click(object sender, RoutedEventArgs e)
     {
+        var text = CurrentText;
         var dialog = new OpenFileDialog
         {
-            Title = "Adicionar GIF animado",
-            Filter = "GIF animado (*.gif)|*.gif",
+            Title = text["DialogAddGifTitle"],
+            Filter = text["DialogAddGifFilter"],
             Multiselect = true
         };
 
@@ -167,7 +160,7 @@ public partial class SettingsWindow : Window
 
         foreach (var comboBox in new[]
                  {
-                     ImportModeBox, IconQualityBox, HoverEffectBox, MonitorBox,
+                     LanguageBox, ImportModeBox, IconQualityBox, HoverEffectBox, MonitorBox,
                      EdgeBox, LayeringBox
                  })
         {
@@ -229,7 +222,10 @@ public partial class SettingsWindow : Window
             _isSavingValues = true;
             var oldName = _bar.Name;
             var oldFolder = UserPaths.GetBarFolder(oldName);
-            _bar.Name = string.IsNullOrWhiteSpace(BarNameBox.Text) ? "Principal" : BarNameBox.Text.Trim();
+            var selectedLanguage = TextCatalog.NormalizeLanguage(LanguageBox.SelectedValue as string ?? app.Language);
+            var languageChanged = !string.Equals(app.Language, selectedLanguage, StringComparison.OrdinalIgnoreCase);
+            app.Language = selectedLanguage;
+            _bar.Name = string.IsNullOrWhiteSpace(BarNameBox.Text) ? CurrentText["SettingsBarPrefix"] : BarNameBox.Text.Trim();
             app.RunAtStartup = RunAtStartupBox.IsChecked == true;
             StartupRegistration.SetEnabled(app.RunAtStartup);
             _bar.HideLabels = HideLabelsBox.IsChecked == true;
@@ -238,7 +234,7 @@ public partial class SettingsWindow : Window
             SetWindowsButtonEnabled(WindowsButtonBox.IsChecked == true);
             SetRecycleBinEnabled(RecycleBinBox.IsChecked == true);
             app.HideNativeTaskbar = HideNativeTaskbarBox.IsChecked == true;
-            _bar.ImportMode = (DockImportMode)ImportModeBox.SelectedValue;
+            _bar.ImportMode = SelectedEnum(ImportModeBox, _bar.ImportMode);
             _bar.AutoHideDelayMs = (int)AutoHideDelaySlider.Value;
             _bar.AutoHideDurationMs = (int)AutoHideDurationSlider.Value;
 
@@ -246,17 +242,17 @@ public partial class SettingsWindow : Window
             _bar.IconOpacity = (int)IconOpacitySlider.Value;
             _bar.IconSpacing = (int)IconSpacingSlider.Value;
             _bar.IconBottomMargin = (int)IconBottomMarginSlider.Value;
-            _bar.IconQuality = (IconQuality)IconQualityBox.SelectedValue;
+            _bar.IconQuality = SelectedEnum(IconQualityBox, _bar.IconQuality);
             _bar.ZoomEnabled = ZoomEnabledBox.IsChecked == true;
             _bar.ZoomOpaque = ZoomOpaqueBox.IsChecked == true;
             _bar.ZoomSize = (int)ZoomSizeSlider.Value;
             _bar.ZoomRange = (int)ZoomRangeSlider.Value;
             _bar.ZoomDurationMs = (int)ZoomDurationSlider.Value;
-            _bar.HoverEffect = (HoverEffect)HoverEffectBox.SelectedValue;
+            _bar.HoverEffect = SelectedEnum(HoverEffectBox, _bar.HoverEffect);
 
             _bar.MonitorIndex = (int)MonitorBox.SelectedValue;
-            _bar.Edge = (DockEdge)EdgeBox.SelectedValue;
-            _bar.Layering = (DockLayering)LayeringBox.SelectedValue;
+            _bar.Edge = SelectedEnum(EdgeBox, _bar.Edge);
+            _bar.Layering = SelectedEnum(LayeringBox, _bar.Layering);
             _bar.BarWidth = (int)BarWidthSlider.Value;
             _bar.BarHeight = (int)BarHeightSlider.Value;
             _bar.Offset = OffsetSlider.Value;
@@ -285,7 +281,15 @@ public partial class SettingsWindow : Window
             }
 
             _store.Save();
-            DataContext = new SettingsWindowText(_bar);
+            if (languageChanged)
+            {
+                ApplyLocalizedValues();
+            }
+            else
+            {
+                DataContext = new SettingsWindowText(_bar, CurrentText);
+            }
+
             return true;
         }
         catch (Exception ex)
@@ -360,7 +364,7 @@ public partial class SettingsWindow : Window
                 insertIndex = _bar.Items.Count;
             }
 
-            _bar.Items.Insert(insertIndex, DockItem.CreateRecycleBin());
+            _bar.Items.Insert(insertIndex, DockItem.CreateRecycleBin(CurrentText["ItemRecycleBin"]));
         }
         else if (!enabled && existing is not null)
         {
@@ -368,13 +372,51 @@ public partial class SettingsWindow : Window
         }
     }
 
-    private static IReadOnlyList<EnumItem<T>> EnumItems<T>() where T : struct, Enum
+    private void ApplyLocalizedValues()
+    {
+        var wasLoadingValues = _isLoadingValues;
+        _isLoadingValues = true;
+
+        try
+        {
+            var text = CurrentText;
+            DataContext = new SettingsWindowText(_bar, text);
+            LanguageBox.ItemsSource = TextCatalog.LanguageOptions;
+            LanguageBox.SelectedValue = text.LanguageCode;
+            SetEnumItems(ImportModeBox, EnumItems<DockImportMode>(text), _bar.ImportMode);
+            SetEnumItems(IconQualityBox, EnumItems<IconQuality>(text), _bar.IconQuality);
+            SetEnumItems(HoverEffectBox, EnumItems<HoverEffect>(text), _bar.HoverEffect);
+            SetEnumItems(EdgeBox, EnumItems<DockEdge>(text), _bar.Edge);
+            SetEnumItems(LayeringBox, EnumItems<DockLayering>(text), _bar.Layering);
+        }
+        finally
+        {
+            _isLoadingValues = wasLoadingValues;
+        }
+    }
+
+    private static void SetEnumItems<T>(ComboBox comboBox, IReadOnlyList<EnumItem<T>> items, T selectedValue)
+        where T : struct, Enum
+    {
+        comboBox.ItemsSource = items;
+        comboBox.SelectedValue = selectedValue;
+    }
+
+    private static T SelectedEnum<T>(ComboBox comboBox, T fallback)
+        where T : struct, Enum
+    {
+        return comboBox.SelectedValue is T value ? value : fallback;
+    }
+
+    private LocalizedText CurrentText => TextCatalog.Get(_store.Current.App.Language);
+
+    private static IReadOnlyList<EnumItem<T>> EnumItems<T>(LocalizedText text) where T : struct, Enum
     {
         var values = (T[])Enum.GetValues(typeof(T));
         var items = new List<EnumItem<T>>();
         foreach (var value in values)
         {
-            items.Add(new EnumItem<T>(value, LabelFor(value)));
+            items.Add(new EnumItem<T>(value, text.LabelFor(value)));
         }
 
         return items;
@@ -393,29 +435,6 @@ public partial class SettingsWindow : Window
         return items;
     }
 
-    private static string LabelFor<T>(T value)
-    {
-        return value switch
-        {
-            DockEdge.Bottom => "Rodape",
-            DockEdge.Top => "Topo",
-            DockEdge.Left => "Esquerda",
-            DockEdge.Right => "Direita",
-            DockLayering.TopMost => "Sempre acima",
-            DockLayering.Normal => "Normal",
-            DockLayering.Bottom => "Sempre abaixo",
-            IconQuality.Low => "Baixa",
-            IconQuality.Medium => "Media",
-            IconQuality.High => "Alta",
-            HoverEffect.None => "Nenhum",
-            HoverEffect.Bubble => "Bolha",
-            HoverEffect.Plateau => "Plato",
-            DockImportMode.MoveToBarFolder => "Mover para a pasta da barra",
-            DockImportMode.CreateShortcutInBarFolder => "Criar atalho na pasta da barra",
-            _ => value?.ToString() ?? ""
-        };
-    }
-
     public sealed record EnumItem<T>(T Value, string Label)
     {
         public override string ToString() => Label;
@@ -423,11 +442,14 @@ public partial class SettingsWindow : Window
 
     public sealed class SettingsWindowText
     {
-        public SettingsWindowText(DockBarSettings bar)
+        public SettingsWindowText(DockBarSettings bar, LocalizedText text)
         {
-            BarNameText = $"Barra: {bar.Name}";
+            Text = text;
+            BarNameText = $"{text["SettingsBarPrefix"]}: {bar.Name}";
             ConfigPathText = UserPaths.ConfigFile;
         }
+
+        public LocalizedText Text { get; }
 
         public string BarNameText { get; }
 

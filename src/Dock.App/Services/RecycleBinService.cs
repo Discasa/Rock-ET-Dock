@@ -132,7 +132,7 @@ public static class RecycleBinService
         var result = SHFileOperation(ref operation);
         if (result != 0)
         {
-            throw new IOException($"Falha ao mover para a lixeira. Codigo: {result}.");
+            throw new IOException($"Failed to move to Recycle Bin. Code: {result}.");
         }
     }
 
