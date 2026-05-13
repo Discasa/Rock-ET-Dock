@@ -11,8 +11,8 @@ public static class DockGeometry
         var itemStep = input.ItemButtonSize + Math.Max(0, input.IconSpacing);
         var thickness = input.ItemButtonSize + 28;
         var edgeDistance = 8 + input.EdgeDistance;
-        var maxShellWidth = Math.Max(40, input.WorkingWidth - 32 - (input.Overhang * 2));
-        var maxShellHeight = Math.Max(40, input.WorkingHeight - 32 - (input.Overhang * 2));
+        var maxShellWidth = Math.Max(40, input.WorkingWidth - 32 - (input.HorizontalOverhang * 2));
+        var maxShellHeight = Math.Max(40, input.WorkingHeight - 32 - (input.VerticalOverhang * 2));
 
         double shellWidth;
         double shellHeight;
@@ -36,8 +36,8 @@ public static class DockGeometry
                 : thickness;
         }
 
-        var windowWidth = shellWidth + (input.Overhang * 2);
-        var windowHeight = shellHeight + (input.Overhang * 2);
+        var windowWidth = shellWidth + (input.HorizontalOverhang * 2);
+        var windowHeight = shellHeight + (input.VerticalOverhang * 2);
         var centeredShellLeft = Clamp(
             input.WorkingLeft + (input.WorkingWidth - shellWidth) / 2 + input.CenterOffset,
             input.WorkingLeft + 8,
@@ -47,22 +47,22 @@ public static class DockGeometry
             input.WorkingTop + 8,
             input.WorkingTop + input.WorkingHeight - shellHeight - 8);
 
-        var windowLeft = centeredShellLeft - input.Overhang;
-        var windowTop = centeredShellTop - input.Overhang;
+        var windowLeft = centeredShellLeft - input.HorizontalOverhang;
+        var windowTop = centeredShellTop - input.VerticalOverhang;
 
         switch (input.Edge)
         {
             case DockEdge.Bottom:
-                windowTop = input.WorkingTop + input.WorkingHeight - shellHeight - edgeDistance - input.Overhang;
+                windowTop = input.WorkingTop + input.WorkingHeight - shellHeight - edgeDistance - input.VerticalOverhang;
                 break;
             case DockEdge.Top:
-                windowTop = input.WorkingTop + edgeDistance - input.Overhang;
+                windowTop = input.WorkingTop + edgeDistance - input.VerticalOverhang;
                 break;
             case DockEdge.Left:
-                windowLeft = input.WorkingLeft + edgeDistance - input.Overhang;
+                windowLeft = input.WorkingLeft + edgeDistance - input.HorizontalOverhang;
                 break;
             case DockEdge.Right:
-                windowLeft = input.WorkingLeft + input.WorkingWidth - shellWidth - edgeDistance - input.Overhang;
+                windowLeft = input.WorkingLeft + input.WorkingWidth - shellWidth - edgeDistance - input.HorizontalOverhang;
                 break;
         }
 
@@ -89,7 +89,8 @@ public readonly record struct DockGeometryInput(
     int ItemCount,
     double ItemButtonSize,
     double IconSpacing,
-    double Overhang,
+    double HorizontalOverhang,
+    double VerticalOverhang,
     double EdgeDistance,
     double CenterOffset,
     double BarWidth,

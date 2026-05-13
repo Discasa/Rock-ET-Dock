@@ -160,7 +160,7 @@ public partial class SettingsWindow : Window
 
         foreach (var comboBox in new[]
                  {
-                     LanguageBox, ImportModeBox, IconQualityBox, HoverEffectBox, MonitorBox,
+                     LanguageBox, MoveModifierBox, IconQualityBox, HoverEffectBox, MonitorBox,
                      EdgeBox, LayeringBox
                  })
         {
@@ -234,7 +234,8 @@ public partial class SettingsWindow : Window
             SetWindowsButtonEnabled(WindowsButtonBox.IsChecked == true);
             SetRecycleBinEnabled(RecycleBinBox.IsChecked == true);
             app.HideNativeTaskbar = HideNativeTaskbarBox.IsChecked == true;
-            _bar.ImportMode = SelectedEnum(ImportModeBox, _bar.ImportMode);
+            _bar.ImportMode = DockImportMode.CreateShortcutInBarFolder;
+            _bar.MoveModifierKey = SelectedEnum(MoveModifierBox, _bar.MoveModifierKey);
             _bar.AutoHideDelayMs = (int)AutoHideDelaySlider.Value;
             _bar.AutoHideDurationMs = (int)AutoHideDurationSlider.Value;
 
@@ -383,7 +384,7 @@ public partial class SettingsWindow : Window
             DataContext = new SettingsWindowText(_bar, text);
             LanguageBox.ItemsSource = TextCatalog.LanguageOptions;
             LanguageBox.SelectedValue = text.LanguageCode;
-            SetEnumItems(ImportModeBox, EnumItems<DockImportMode>(text), _bar.ImportMode);
+            SetEnumItems(MoveModifierBox, EnumItems<DockMoveModifierKey>(text), _bar.MoveModifierKey);
             SetEnumItems(IconQualityBox, EnumItems<IconQuality>(text), _bar.IconQuality);
             SetEnumItems(HoverEffectBox, EnumItems<HoverEffect>(text), _bar.HoverEffect);
             SetEnumItems(EdgeBox, EnumItems<DockEdge>(text), _bar.Edge);

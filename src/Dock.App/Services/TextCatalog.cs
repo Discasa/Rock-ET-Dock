@@ -64,6 +64,7 @@ public sealed class LocalizedText
             IconQuality quality => this[$"EnumIconQuality{quality}"],
             HoverEffect effect => this[$"EnumHoverEffect{effect}"],
             DockImportMode mode => this[$"EnumDockImportMode{mode}"],
+            DockMoveModifierKey moveModifierKey => this[$"EnumDockMoveModifierKey{moveModifierKey}"],
             _ => value?.ToString() ?? ""
         };
     }
@@ -97,7 +98,7 @@ public sealed class LocalizedText
         ["SettingsWindowsButton"] = "Add Windows button to the dock",
         ["SettingsRecycleBin"] = "Add Recycle Bin to the dock",
         ["SettingsHideNativeTaskbar"] = "Hide the native Windows taskbar while Rock ET Dock is running",
-        ["SettingsImportMode"] = "When adding files and folders",
+        ["SettingsMoveModifierKey"] = "Hold this key to move items instead of adding or removing shortcuts",
         ["SettingsAutoHideDelay"] = "Auto-hide delay (ms)",
         ["SettingsAutoHideDuration"] = "Auto-hide duration (ms)",
         ["SettingsBarFolder"] = "Dock folder",
@@ -147,7 +148,6 @@ public sealed class LocalizedText
         ["MenuFile"] = "File...",
         ["MenuFolder"] = "Folder...",
         ["MenuSeparator"] = "Separator",
-        ["MenuSettings"] = "Settings",
         ["MenuExit"] = "Exit",
         ["MenuOpenDockFolder"] = "Open dock folder",
         ["MenuCreateNewDock"] = "Create new dock",
@@ -167,11 +167,11 @@ public sealed class LocalizedText
         ["BarGeneric"] = "Dock",
 
         ["ItemWindows"] = "Windows",
+        ["ItemWindowsSettings"] = "Windows Settings",
+        ["ItemFileExplorer"] = "File Explorer",
+        ["ItemMicrosoftEdge"] = "Microsoft Edge",
         ["ItemRecycleBin"] = "Recycle Bin",
         ["ItemSeparator"] = "Separator",
-        ["ItemSettings"] = "Settings",
-        ["ItemExit"] = "Exit",
-
         ["EnumDockEdgeBottom"] = "Bottom",
         ["EnumDockEdgeTop"] = "Top",
         ["EnumDockEdgeLeft"] = "Left",
@@ -186,7 +186,10 @@ public sealed class LocalizedText
         ["EnumHoverEffectBubble"] = "Bubble",
         ["EnumHoverEffectPlateau"] = "Plateau",
         ["EnumDockImportModeMoveToBarFolder"] = "Move into the dock folder",
-        ["EnumDockImportModeCreateShortcutInBarFolder"] = "Create a shortcut in the dock folder"
+        ["EnumDockImportModeCreateShortcutInBarFolder"] = "Create a shortcut in the dock folder",
+        ["EnumDockMoveModifierKeyShift"] = "Shift",
+        ["EnumDockMoveModifierKeyControl"] = "Control",
+        ["EnumDockMoveModifierKeyAlt"] = "Alt"
     };
 
     private static readonly IReadOnlyDictionary<string, string> PortugueseBrazilianValues = new Dictionary<string, string>(StringComparer.Ordinal)
@@ -205,7 +208,7 @@ public sealed class LocalizedText
         ["SettingsWindowsButton"] = "Adicionar botão Windows na barra",
         ["SettingsRecycleBin"] = "Adicionar Lixeira na barra",
         ["SettingsHideNativeTaskbar"] = "Esconder a barra nativa do Windows enquanto o Rock ET Dock estiver aberto",
-        ["SettingsImportMode"] = "Ao adicionar arquivos e pastas",
+        ["SettingsMoveModifierKey"] = "Segure esta tecla para mover itens em vez de adicionar ou remover atalhos",
         ["SettingsAutoHideDelay"] = "Atraso do auto-ocultar (ms)",
         ["SettingsAutoHideDuration"] = "Duração do auto-ocultar (ms)",
         ["SettingsBarFolder"] = "Pasta da barra",
@@ -255,7 +258,6 @@ public sealed class LocalizedText
         ["MenuFile"] = "Arquivo...",
         ["MenuFolder"] = "Pasta...",
         ["MenuSeparator"] = "Separador",
-        ["MenuSettings"] = "Configurações",
         ["MenuExit"] = "Sair",
         ["MenuOpenDockFolder"] = "Abrir pasta da barra",
         ["MenuCreateNewDock"] = "Criar nova barra",
@@ -275,11 +277,11 @@ public sealed class LocalizedText
         ["BarGeneric"] = "Barra",
 
         ["ItemWindows"] = "Windows",
+        ["ItemWindowsSettings"] = "Configurações do Windows",
+        ["ItemFileExplorer"] = "Windows Explorer",
+        ["ItemMicrosoftEdge"] = "Microsoft Edge",
         ["ItemRecycleBin"] = "Lixeira",
         ["ItemSeparator"] = "Separador",
-        ["ItemSettings"] = "Configurações",
-        ["ItemExit"] = "Sair",
-
         ["EnumDockEdgeBottom"] = "Inferior",
         ["EnumDockEdgeTop"] = "Superior",
         ["EnumDockEdgeLeft"] = "Esquerda",
@@ -294,6 +296,9 @@ public sealed class LocalizedText
         ["EnumHoverEffectBubble"] = "Bolha",
         ["EnumHoverEffectPlateau"] = "Platô",
         ["EnumDockImportModeMoveToBarFolder"] = "Mover para a pasta da barra",
-        ["EnumDockImportModeCreateShortcutInBarFolder"] = "Criar atalho na pasta da barra"
+        ["EnumDockImportModeCreateShortcutInBarFolder"] = "Criar atalho na pasta da barra",
+        ["EnumDockMoveModifierKeyShift"] = "Shift",
+        ["EnumDockMoveModifierKeyControl"] = "Control",
+        ["EnumDockMoveModifierKeyAlt"] = "Alt"
     };
 }

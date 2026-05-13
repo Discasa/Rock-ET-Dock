@@ -98,11 +98,25 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
 
     public double ItemOpacity => Clamp(Bar.IconOpacity, 15, 100) / 100.0;
 
-    public double ZoomOverhang => Bar.ZoomEnabled
-        ? Clamp(((double)Bar.ZoomSize - Bar.IconSize) / 2 + 12, 12, 56)
+    public double CrossAxisZoomOverhang => Bar.ZoomEnabled
+        ? Clamp((ItemButtonSize * (FocusedZoomScale - 1.0) / 2.0) + 12, 12, 96)
         : 12;
 
-    public Thickness DockShellMargin => new(ZoomOverhang);
+    public double PrimaryAxisZoomOverhang => Bar.ZoomEnabled
+        ? Clamp(CalculateRequiredHoverAxisExtent() + 12, CrossAxisZoomOverhang, 220)
+        : 12;
+
+    public double HorizontalZoomOverhang => Orientation == System.Windows.Controls.Orientation.Vertical
+        ? CrossAxisZoomOverhang
+        : PrimaryAxisZoomOverhang;
+
+    public double VerticalZoomOverhang => Orientation == System.Windows.Controls.Orientation.Vertical
+        ? PrimaryAxisZoomOverhang
+        : CrossAxisZoomOverhang;
+
+    public double ZoomOverhang => Math.Max(HorizontalZoomOverhang, VerticalZoomOverhang);
+
+    public Thickness DockShellMargin => new(HorizontalZoomOverhang, VerticalZoomOverhang, HorizontalZoomOverhang, VerticalZoomOverhang);
 
     public Visibility LabelVisibility => Bar.HideLabels ? Visibility.Collapsed : Visibility.Visible;
 
@@ -157,7 +171,7 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
             return 1.0;
         }
 
-        var focusedScale = Clamp((double)Bar.ZoomSize / Math.Max(1, Bar.IconSize), 1.0, 1.8);
+        var focusedScale = FocusedZoomScale;
         if (distance <= 0)
         {
             return focusedScale;
@@ -373,6 +387,10 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(LabelFontSize));
         OnPropertyChanged(nameof(LabelMaxWidth));
         OnPropertyChanged(nameof(ItemOpacity));
+        OnPropertyChanged(nameof(CrossAxisZoomOverhang));
+        OnPropertyChanged(nameof(PrimaryAxisZoomOverhang));
+        OnPropertyChanged(nameof(HorizontalZoomOverhang));
+        OnPropertyChanged(nameof(VerticalZoomOverhang));
         OnPropertyChanged(nameof(ZoomOverhang));
         OnPropertyChanged(nameof(DockShellMargin));
         OnPropertyChanged(nameof(LabelVisibility));
@@ -433,6 +451,36 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
     private static double Clamp(double value, double minimum, double maximum)
     {
         return value < minimum ? minimum : value > maximum ? maximum : value;
+    }
+
+    private double FocusedZoomScale => Clamp((double)Bar.ZoomSize / Math.Max(1, Bar.IconSize), 1.0, 1.8);
+
+    private double CalculateRequiredHoverAxisExtent()
+    {
+        var slotStep = Math.Max(1, ItemButtonSize + Math.Max(0, Bar.IconSpacing));
+        var radius = Clamp(Bar.ZoomRange, 0, 20) + 0.65;
+        var itemCount = Math.Max(3, ((int)Math.Ceiling(radius) * 2) + 3);
+        var centers = Enumerable.Range(0, itemCount)
+            .Select(index => index * slotStep)
+            .ToArray();
+        var maxExtent = 0.0;
+
+        for (var pointerStep = 0; pointerStep <= (itemCount - 1) * 2; pointerStep++)
+        {
+            var pointerAxis = pointerStep * slotStep / 2.0;
+            var scales = centers
+                .Select(center => GetZoomScaleForDistance(Math.Abs(pointerAxis - center) / slotStep))
+                .ToArray();
+            var offsets = DockZoomLayout.CalculateOffsets(centers, scales, ItemButtonSize);
+
+            for (var index = 0; index < centers.Length; index++)
+            {
+                var ownExpansion = ItemButtonSize * (scales[index] - 1.0) / 2.0;
+                maxExtent = Math.Max(maxExtent, Math.Abs(offsets[index]) + ownExpansion);
+            }
+        }
+
+        return maxExtent;
     }
 
     private static Brush CreateBrush(Color color)

@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+- Fixed hover magnification clipping at the start and end of the dock by sizing the transparent hover overhang per axis.
+- Added `reset-config.bat` to reset the current user's dock configuration while preserving managed dock items.
+- Removed the dock item versions of Settings and Exit; those actions remain in the dock context menu.
+- Changed first-run defaults to Windows, Windows Settings, File Explorer, Microsoft Edge, and Recycle Bin.
+- Changed drag-and-drop defaults so dropping into the dock creates shortcuts and dragging out removes dock shortcuts; holding the configurable move modifier, `Shift` by default, performs managed file moves.
+- Added distinct drag animations for move actions and remove-from-dock actions.
+
 ## 0.3.0 - 2026-05-13
 
 - Translated the application code surface and project documentation to English.

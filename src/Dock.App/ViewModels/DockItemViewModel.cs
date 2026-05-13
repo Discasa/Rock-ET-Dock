@@ -24,8 +24,6 @@ public sealed class DockItemViewModel : INotifyPropertyChanged
             DockItemKind.RecycleBin => ShellIconService.GetRecycleBinIcon(),
             DockItemKind.DropPlaceholder => SpecialIconService.GetDropPlaceholderIcon(),
             DockItemKind.Separator => SpecialIconService.GetSeparatorIcon(),
-            DockItemKind.DockSettings => SpecialIconService.GetSettingsIcon(),
-            DockItemKind.Quit => SpecialIconService.GetQuitIcon(),
             DockItemKind.Window when string.IsNullOrWhiteSpace(item.TargetPath) => SpecialIconService.GetWindowIcon(),
             _ => ShellIconService.GetIcon(item.TargetPath)
         };
@@ -38,8 +36,6 @@ public sealed class DockItemViewModel : INotifyPropertyChanged
         DockItemKind.WindowsButton => _text["ItemWindows"],
         DockItemKind.RecycleBin => _text["ItemRecycleBin"],
         DockItemKind.Separator => _text["ItemSeparator"],
-        DockItemKind.DockSettings => _text["ItemSettings"],
-        DockItemKind.Quit => _text["ItemExit"],
         _ => Item.DisplayName
     };
 
@@ -58,10 +54,6 @@ public sealed class DockItemViewModel : INotifyPropertyChanged
     public bool IsDropPlaceholder => Item.Kind == DockItemKind.DropPlaceholder;
 
     public bool IsSeparator => Item.Kind == DockItemKind.Separator;
-
-    public bool IsDockSettings => Item.Kind == DockItemKind.DockSettings;
-
-    public bool IsQuit => Item.Kind == DockItemKind.Quit;
 
     public Visibility StaticIconVisibility => IsAnimatedGif ? Visibility.Collapsed : Visibility.Visible;
 

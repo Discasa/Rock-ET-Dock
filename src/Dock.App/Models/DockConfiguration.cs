@@ -57,7 +57,9 @@ public sealed class DockBarSettings
 
     public bool AutoHide { get; set; }
 
-    public DockImportMode ImportMode { get; set; } = DockImportMode.MoveToBarFolder;
+    public DockImportMode ImportMode { get; set; } = DockImportMode.CreateShortcutInBarFolder;
+
+    public DockMoveModifierKey MoveModifierKey { get; set; } = DockMoveModifierKey.Shift;
 
     public int AutoHideDelayMs { get; set; } = 500;
 
@@ -177,23 +179,6 @@ public sealed class DockItem
         };
     }
 
-    public static DockItem CreateDockSettings(string? displayName = null)
-    {
-        return new DockItem
-        {
-            Kind = DockItemKind.DockSettings,
-            DisplayName = displayName ?? "Settings"
-        };
-    }
-
-    public static DockItem CreateQuit(string? displayName = null)
-    {
-        return new DockItem
-        {
-            Kind = DockItemKind.Quit,
-            DisplayName = displayName ?? "Exit"
-        };
-    }
 }
 
 public enum DockEdge
@@ -245,4 +230,11 @@ public enum DockImportMode
 {
     MoveToBarFolder,
     CreateShortcutInBarFolder
+}
+
+public enum DockMoveModifierKey
+{
+    Shift,
+    Control,
+    Alt
 }

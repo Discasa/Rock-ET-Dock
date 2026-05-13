@@ -62,8 +62,10 @@
                                   Margin="0,0,0,8"
                                   Content="{Binding Text[SettingsHideNativeTaskbar]}" />
 
-                        <TextBlock Margin="0,10,0,0" Text="{Binding Text[SettingsImportMode]}" />
-                        <ComboBox x:Name="ImportModeBox"
+                        <TextBlock Margin="0,10,0,0"
+                                   Text="{Binding Text[SettingsMoveModifierKey]}"
+                                   TextWrapping="Wrap" />
+                        <ComboBox x:Name="MoveModifierBox"
                                   Margin="0,4,0,12"
                                   SelectedValuePath="Value" />
 

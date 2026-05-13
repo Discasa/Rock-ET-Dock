@@ -31,10 +31,12 @@ public sealed class DockConfigurationStore
             Save();
         }
 
+        var changed = false;
+
         if (Current.Bars.Count == 0)
         {
             Current.Bars.Add(CreateDefaultBar("Dock"));
-            Save();
+            changed = true;
         }
 
         Current.App.Language = TextCatalog.NormalizeLanguage(Current.App.Language);
@@ -42,6 +44,12 @@ public sealed class DockConfigurationStore
         foreach (var bar in Current.Bars)
         {
             UserPaths.EnsureBarFolder(bar.Name);
+            changed |= NormalizeBar(bar);
+        }
+
+        if (changed)
+        {
+            Save();
         }
 
         return Current;
@@ -69,10 +77,29 @@ public sealed class DockConfigurationStore
     {
         var text = TextCatalog.Get(TextCatalog.English);
         var bar = DockBarSettings.Create(name, DockEdge.Bottom);
-        bar.Items.Add(DockItem.CreateWindowsButton());
-        bar.Items.Add(DockItem.CreateRecycleBin(text["ItemRecycleBin"]));
-        bar.Items.Add(DockItem.CreateDockSettings(text["ItemSettings"]));
-        bar.Items.Add(DockItem.CreateQuit(text["ItemExit"]));
+        bar.ImportMode = DockImportMode.CreateShortcutInBarFolder;
+        bar.MoveModifierKey = DockMoveModifierKey.Shift;
+
+        foreach (var item in DefaultDockItemFactory.CreateInitialItems(text))
+        {
+            bar.Items.Add(item);
+        }
+
         return bar;
+    }
+
+    private static bool NormalizeBar(DockBarSettings bar)
+    {
+        var changed = false;
+
+        if (bar.ImportMode != DockImportMode.CreateShortcutInBarFolder)
+        {
+            bar.ImportMode = DockImportMode.CreateShortcutInBarFolder;
+            changed = true;
+        }
+
+        var removedLegacyItems = bar.Items.RemoveAll(static item =>
+            item.Kind is DockItemKind.DockSettings or DockItemKind.Quit);
+        return changed || removedLegacyItems > 0;
     }
 }

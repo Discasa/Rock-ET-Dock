@@ -23,6 +23,7 @@ foreach (var edge in Enum.GetValues<DockEdge>())
         itemButtonSize,
         IconSpacing: 8,
         overhang,
+        overhang,
         edgeDistance,
         centerOffset,
         BarWidth: 0,
@@ -35,6 +36,8 @@ ValidateReorder();
 ValidateRemoveItem();
 ValidateSpecialItems();
 ValidateSpecialCommandItems();
+ValidateDefaultDockItems();
+ValidateLegacySpecialItemsAreRemovedOnLoad();
 ValidateRunningApplicationMapping();
 ValidateDropPlaceholder();
 ValidateImportModes();
@@ -43,6 +46,7 @@ ValidateExportToDesktop();
 ValidateCompactIconSizing();
 ValidateNeighborZoomScale();
 ValidateHoverZoomOffsets();
+ValidateHoverOverhangPreventsEdgeClipping();
 ValidateCustomBarGeometry();
 ValidatePlaceholderIsGapOnly();
 ValidateLocalization();
@@ -53,9 +57,12 @@ Console.WriteLine("Dock reorder checks passed.");
 Console.WriteLine("Dock desktop export checks passed.");
 Console.WriteLine("Dock import, placeholder and GIF checks passed.");
 Console.WriteLine("Dock special command and running-app checks passed.");
+Console.WriteLine("Dock default item checks passed.");
+Console.WriteLine("Dock legacy special item migration checks passed.");
 Console.WriteLine("Dock compact icon sizing checks passed.");
 Console.WriteLine("Dock neighbor zoom checks passed.");
 Console.WriteLine("Dock hover zoom offset checks passed.");
+Console.WriteLine("Dock hover overhang checks passed.");
 Console.WriteLine("Dock custom bar sizing checks passed.");
 Console.WriteLine("Dock placeholder gap checks passed.");
 Console.WriteLine("Dock localization checks passed.");
@@ -173,16 +180,94 @@ void ValidateSpecialItems()
 void ValidateSpecialCommandItems()
 {
     var separator = DockItem.CreateSeparator();
-    var settings = DockItem.CreateDockSettings();
-    var quit = DockItem.CreateQuit();
 
     AssertTrue(separator.Kind == DockItemKind.Separator, "separator kind");
-    AssertTrue(settings.Kind == DockItemKind.DockSettings, "settings kind");
-    AssertTrue(quit.Kind == DockItemKind.Quit, "quit kind");
 
     var separatorViewModel = new DockItemViewModel(separator);
     AssertTrue(separatorViewModel.ContentVisibility == System.Windows.Visibility.Collapsed, "separator hides icon content");
     AssertTrue(separatorViewModel.SeparatorVisibility == System.Windows.Visibility.Visible, "separator shows separator content");
+}
+
+void ValidateDefaultDockItems()
+{
+    var items = DefaultDockItemFactory.CreateInitialItems(TextCatalog.Get(TextCatalog.English)).ToArray();
+
+    AssertTrue(items.Length == 5, "default dock should start with exactly five items");
+    AssertTrue(items[0].Kind == DockItemKind.WindowsButton, "default first item should be Windows button");
+    AssertTrue(items[1].DisplayName == "Windows Settings", "default second item should be Windows Settings");
+    AssertTrue(items[2].DisplayName == "File Explorer", "default third item should be File Explorer");
+    AssertTrue(items[3].DisplayName == "Microsoft Edge", "default fourth item should be Microsoft Edge");
+    AssertTrue(items[4].Kind == DockItemKind.RecycleBin, "default fifth item should be Recycle Bin");
+    AssertTrue(!items.Any(static item => item.Kind is DockItemKind.DockSettings or DockItemKind.Quit), "default dock should not include legacy Settings or Exit items");
+
+    var bar = new DockBarSettings();
+    AssertTrue(bar.ImportMode == DockImportMode.CreateShortcutInBarFolder, "shortcut creation should be the default import behavior");
+    AssertTrue(bar.MoveModifierKey == DockMoveModifierKey.Shift, "Shift should be the default move modifier");
+}
+
+void ValidateLegacySpecialItemsAreRemovedOnLoad()
+{
+    var tempRoot = Path.Combine(Path.GetTempPath(), "rock-et-dock-legacy-config-" + Guid.NewGuid().ToString("N"));
+    var localAppData = Path.Combine(tempRoot, "localappdata");
+    var userProfile = Path.Combine(tempRoot, "profile");
+    var previousLocalAppData = Environment.GetEnvironmentVariable("ROCK_ET_DOCK_LOCALAPPDATA");
+    var previousUserProfile = Environment.GetEnvironmentVariable("ROCK_ET_DOCK_USERPROFILE");
+
+    try
+    {
+        Environment.SetEnvironmentVariable("ROCK_ET_DOCK_LOCALAPPDATA", localAppData);
+        Environment.SetEnvironmentVariable("ROCK_ET_DOCK_USERPROFILE", userProfile);
+        Directory.CreateDirectory(UserPaths.ConfigRoot);
+        File.WriteAllText(UserPaths.ConfigFile, """
+        {
+          "Version": 1,
+          "App": {
+            "Language": "en-US"
+          },
+          "Bars": [
+            {
+              "Id": "legacy",
+              "Name": "Legacy",
+              "ImportMode": "MoveToBarFolder",
+              "Items": [
+                {
+                  "Id": "windows-button",
+                  "Kind": "WindowsButton",
+                  "DisplayName": "Windows"
+                },
+                {
+                  "Id": "legacy-settings",
+                  "Kind": "DockSettings",
+                  "DisplayName": "Settings"
+                },
+                {
+                  "Id": "legacy-quit",
+                  "Kind": "Quit",
+                  "DisplayName": "Exit"
+                }
+              ]
+            }
+          ]
+        }
+        """);
+
+        var config = new DockConfigurationStore().Load();
+        var bar = config.Bars.Single();
+        AssertTrue(bar.Items.Count == 1, "legacy Settings and Exit items should be removed on load");
+        AssertTrue(bar.Items[0].Kind == DockItemKind.WindowsButton, "legacy migration should preserve non-legacy items");
+        AssertTrue(bar.ImportMode == DockImportMode.CreateShortcutInBarFolder, "legacy import mode should normalize to shortcut default");
+        AssertTrue(!File.ReadAllText(UserPaths.ConfigFile).Contains("DockSettings", StringComparison.Ordinal), "saved config should not keep DockSettings");
+        AssertTrue(!File.ReadAllText(UserPaths.ConfigFile).Contains("Quit", StringComparison.Ordinal), "saved config should not keep Quit");
+    }
+    finally
+    {
+        Environment.SetEnvironmentVariable("ROCK_ET_DOCK_LOCALAPPDATA", previousLocalAppData);
+        Environment.SetEnvironmentVariable("ROCK_ET_DOCK_USERPROFILE", previousUserProfile);
+        if (Directory.Exists(tempRoot))
+        {
+            Directory.Delete(tempRoot, recursive: true);
+        }
+    }
 }
 
 void ValidateRunningApplicationMapping()
@@ -366,7 +451,8 @@ void ValidateCompactIconSizing()
         ItemCount: 3,
         compactViewModel.ItemButtonSize,
         compactBar.IconSpacing,
-        compactViewModel.ZoomOverhang,
+        compactViewModel.HorizontalZoomOverhang,
+        compactViewModel.VerticalZoomOverhang,
         EdgeDistance: 0,
         CenterOffset: 0,
         BarWidth: compactBar.BarWidth,
@@ -422,6 +508,34 @@ void ValidateHoverZoomOffsets()
     AssertTrue(combinedOffsets[2] > 0, "right influenced icon should still move outward");
 }
 
+void ValidateHoverOverhangPreventsEdgeClipping()
+{
+    var bar = new DockBarSettings
+    {
+        IconSize = 40,
+        ZoomSize = 64,
+        ZoomEnabled = true,
+        ZoomRange = 4,
+        IconSpacing = 8
+    };
+    var viewModel = new DockBarViewModel(bar);
+    var slotStep = viewModel.ItemButtonSize + bar.IconSpacing;
+    var centers = Enumerable.Range(0, 9)
+        .Select(index => index * slotStep)
+        .ToArray();
+    var pointerAxis = centers[4];
+    var scales = centers
+        .Select(center => viewModel.GetZoomScaleForDistance(Math.Abs(pointerAxis - center) / slotStep))
+        .ToArray();
+    var offsets = DockZoomLayout.CalculateOffsets(centers, scales, viewModel.ItemButtonSize);
+    var requiredExtent = offsets
+        .Select((offset, index) => Math.Abs(offset) + (viewModel.ItemButtonSize * (scales[index] - 1.0) / 2.0))
+        .Max();
+
+    AssertTrue(viewModel.PrimaryAxisZoomOverhang > requiredExtent, "primary-axis overhang should cover outward hover offsets");
+    AssertTrue(viewModel.PrimaryAxisZoomOverhang > viewModel.CrossAxisZoomOverhang, "primary-axis overhang should exceed cross-axis overhang when neighbors move outward");
+}
+
 void ValidateCustomBarGeometry()
 {
     var placement = DockGeometry.Calculate(new DockGeometryInput(
@@ -433,7 +547,8 @@ void ValidateCustomBarGeometry()
         ItemCount: 4,
         ItemButtonSize: 64,
         IconSpacing: 18,
-        Overhang: 26,
+        HorizontalOverhang: 26,
+        VerticalOverhang: 26,
         EdgeDistance: 0,
         CenterOffset: 0,
         BarWidth: 720,
@@ -466,9 +581,7 @@ void ValidateLocalization()
     {
         Items =
         [
-            DockItem.CreateRecycleBin(),
-            DockItem.CreateDockSettings(),
-            DockItem.CreateQuit()
+            DockItem.CreateRecycleBin()
         ]
     };
 
@@ -498,7 +611,8 @@ void ValidateVerticalDockGeometryAndOrientation()
         ItemCount: 10,
         new DockBarViewModel(leftBar).ItemButtonSize,
         leftBar.IconSpacing,
-        Overhang: 26,
+        HorizontalOverhang: 26,
+        VerticalOverhang: 26,
         EdgeDistance: 10,
         CenterOffset: 0,
         BarWidth: 0,
@@ -516,7 +630,8 @@ void ValidateVerticalDockGeometryAndOrientation()
         ItemCount: 10,
         new DockBarViewModel(bottomBar).ItemButtonSize,
         bottomBar.IconSpacing,
-        Overhang: 26,
+        HorizontalOverhang: 26,
+        VerticalOverhang: 26,
         EdgeDistance: 10,
         CenterOffset: 0,
         BarWidth: 0,

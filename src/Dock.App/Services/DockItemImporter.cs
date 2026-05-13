@@ -10,15 +10,20 @@ public sealed class DockItemImporter
 {
     public DockItem ImportFileSystemPath(DockBarSettings bar, string sourcePath)
     {
+        return ImportFileSystemPath(bar, sourcePath, bar.ImportMode);
+    }
+
+    public DockItem ImportFileSystemPath(DockBarSettings bar, string sourcePath, DockImportMode importMode)
+    {
         var barFolder = UserPaths.EnsureBarFolder(bar.Name);
         var displayName = GetDisplayName(sourcePath);
-        var targetPath = bar.ImportMode == DockImportMode.CreateShortcutInBarFolder
+        var targetPath = importMode == DockImportMode.CreateShortcutInBarFolder
             ? CreateShortcutInBarFolder(sourcePath, barFolder)
             : MoveIntoBarFolder(sourcePath, barFolder);
 
         return new DockItem
         {
-            Kind = bar.ImportMode == DockImportMode.CreateShortcutInBarFolder
+            Kind = importMode == DockImportMode.CreateShortcutInBarFolder
                 ? DockItemKind.Link
                 : Directory.Exists(targetPath) ? DockItemKind.Folder : DockItemKind.File,
             DisplayName = displayName,

@@ -153,20 +153,6 @@ public partial class MainWindow : Window
                     return;
                 }
 
-                if (itemViewModel.IsDockSettings)
-                {
-                    OpenSettings();
-                    e.Handled = true;
-                    return;
-                }
-
-                if (itemViewModel.IsQuit)
-                {
-                    CurrentApp.ExitAll();
-                    e.Handled = true;
-                    return;
-                }
-
                 if (_store.Current.App.OpenRunningInstances &&
                     RunningApplicationService.TryActivateExisting(itemViewModel.Item))
                 {
@@ -380,20 +366,14 @@ public partial class MainWindow : Window
     private bool ShouldStartExternalShellDrag(Point screenPoint)
     {
         return _draggedItemViewModel is not null &&
+               IsMoveModifierPressed() &&
                CanStartExternalShellDrag(_draggedItemViewModel.Item) &&
                IsScreenPointOutsideDockShell(screenPoint, tolerance: 22);
     }
 
-    private static bool CanStartExternalShellDrag(DockItem item)
+    private bool CanStartExternalShellDrag(DockItem item)
     {
-        if (item.Kind is DockItemKind.WindowsButton or DockItemKind.RecycleBin ||
-            item.IsRuntime ||
-            string.IsNullOrWhiteSpace(item.TargetPath))
-        {
-            return false;
-        }
-
-        return File.Exists(item.TargetPath) || Directory.Exists(item.TargetPath);
+        return CanMoveManagedItemOut(item);
     }
 
     private void StartExternalShellDrag()
@@ -537,7 +517,8 @@ public partial class MainWindow : Window
         var draggedItemId = _draggedItemId;
         var draggedItem = _draggedItemViewModel;
         var draggedButton = _draggedButton;
-        var exportedToDesktop = false;
+        var completedOutsideAction = false;
+        var keepPreviewForExitAnimation = false;
         _isCompletingReorderDrag = true;
         TraceDrag($"complete commit={commit} item={draggedItemId ?? "<none>"}");
 
@@ -547,8 +528,20 @@ public partial class MainWindow : Window
             {
                 if (commit && draggedItem is not null && IsCursorOutsideDockShell())
                 {
-                    exportedToDesktop = TryExportDraggedItemToDesktop(draggedItem);
-                    if (!exportedToDesktop)
+                    if (IsMoveModifierPressed() && CanMoveManagedItemOut(draggedItem.Item))
+                    {
+                        completedOutsideAction = TryMoveDraggedItemToDesktop(draggedItem);
+                        keepPreviewForExitAnimation = completedOutsideAction &&
+                                                      AnimateDragPreviewExit(DockDragExitAnimation.MoveOut);
+                    }
+                    else
+                    {
+                        completedOutsideAction = TryRemoveDraggedItemFromDock(draggedItem);
+                        keepPreviewForExitAnimation = completedOutsideAction &&
+                                                      AnimateDragPreviewExit(DockDragExitAnimation.RemoveFromBar);
+                    }
+
+                    if (!completedOutsideAction)
                     {
                         RestoreDraggedItemToStart(draggedItemId);
                     }
@@ -566,14 +559,17 @@ public partial class MainWindow : Window
                 }
             }
 
-            HideDragPreview();
+            if (!keepPreviewForExitAnimation)
+            {
+                HideDragPreview();
+            }
 
             if (draggedItem is not null)
             {
-                EndHeldItemAnimation(draggedItem, exportedToDesktop ? null : draggedButton);
+                EndHeldItemAnimation(draggedItem, completedOutsideAction ? null : draggedButton);
             }
 
-            if (commit && !exportedToDesktop && !string.IsNullOrWhiteSpace(draggedItemId))
+            if (commit && !completedOutsideAction && !string.IsNullOrWhiteSpace(draggedItemId))
             {
                 AnimateDropSettle(draggedItemId);
             }
@@ -621,22 +617,16 @@ public partial class MainWindow : Window
                point.Y > DockShell.ActualHeight + tolerance;
     }
 
-    private bool TryExportDraggedItemToDesktop(DockItemViewModel itemViewModel)
+    private bool TryMoveDraggedItemToDesktop(DockItemViewModel itemViewModel)
     {
-        if (itemViewModel.IsWindowsButton || itemViewModel.Item.IsRuntime)
+        if (!CanMoveManagedItemOut(itemViewModel.Item))
         {
             return false;
         }
 
         try
         {
-            if (!itemViewModel.IsRecycleBin &&
-                !itemViewModel.IsSeparator &&
-                !itemViewModel.IsDockSettings &&
-                !itemViewModel.IsQuit)
-            {
-                _exporter.MoveToDesktop(itemViewModel.Item);
-            }
+            _exporter.MoveToDesktop(itemViewModel.Item);
 
             if (!_viewModel.RemoveItem(itemViewModel.Item.Id))
             {
@@ -650,13 +640,94 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            RuntimeLog.Write(ex, "TryExportDraggedItemToDesktop");
+            RuntimeLog.Write(ex, "TryMoveDraggedItemToDesktop");
             System.Windows.MessageBox.Show(
                 this,
                 ex.Message,
                 UserPaths.AppName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Warning);
+            return false;
+        }
+    }
+
+    private bool TryRemoveDraggedItemFromDock(DockItemViewModel itemViewModel)
+    {
+        if (itemViewModel.IsWindowsButton || itemViewModel.Item.IsRuntime)
+        {
+            return false;
+        }
+
+        try
+        {
+            DeleteManagedShortcutArtifact(itemViewModel.Item);
+
+            if (!_viewModel.RemoveItem(itemViewModel.Item.Id))
+            {
+                return false;
+            }
+
+            _store.Save();
+            _suppressClickUntilUtc = DateTime.UtcNow.AddMilliseconds(250);
+            PositionDock();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            RuntimeLog.Write(ex, "TryRemoveDraggedItemFromDock");
+            System.Windows.MessageBox.Show(
+                this,
+                ex.Message,
+                UserPaths.AppName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            return false;
+        }
+    }
+
+    private bool CanMoveManagedItemOut(DockItem item)
+    {
+        if (item.Kind is DockItemKind.WindowsButton or DockItemKind.RecycleBin or DockItemKind.Separator ||
+            item.IsRuntime ||
+            string.IsNullOrWhiteSpace(item.TargetPath) ||
+            !IsManagedDockPath(item.TargetPath))
+        {
+            return false;
+        }
+
+        return File.Exists(item.TargetPath) || Directory.Exists(item.TargetPath);
+    }
+
+    private void DeleteManagedShortcutArtifact(DockItem item)
+    {
+        if (item.Kind != DockItemKind.Link ||
+            string.IsNullOrWhiteSpace(item.TargetPath) ||
+            !IsManagedDockPath(item.TargetPath) ||
+            !File.Exists(item.TargetPath))
+        {
+            return;
+        }
+
+        var extension = Path.GetExtension(item.TargetPath);
+        if (extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(".url", StringComparison.OrdinalIgnoreCase))
+        {
+            File.Delete(item.TargetPath);
+        }
+    }
+
+    private bool IsManagedDockPath(string path)
+    {
+        try
+        {
+            var fullPath = Path.GetFullPath(path);
+            var barFolder = Path.GetFullPath(UserPaths.EnsureBarFolder(_bar.Name))
+                .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var barPrefix = barFolder + Path.DirectorySeparatorChar;
+            return fullPath.StartsWith(barPrefix, StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
             return false;
         }
     }
@@ -831,7 +902,7 @@ public partial class MainWindow : Window
             UpdateExternalDropPlaceholderFromPointer(e.GetPosition(DockItemsControl));
         }
 
-        e.Effects = GetDockDropEffect(e.Data);
+        e.Effects = GetDockDropEffect(e.Data, GetImportMode(e.KeyStates));
         e.Handled = true;
     }
 
@@ -847,7 +918,7 @@ public partial class MainWindow : Window
             UpdateExternalDropPlaceholderFromPointer(e.GetPosition(DockItemsControl));
         }
 
-        e.Effects = GetDockDropEffect(e.Data);
+        e.Effects = GetDockDropEffect(e.Data, GetImportMode(e.KeyStates));
         e.Handled = true;
     }
 
@@ -879,16 +950,24 @@ public partial class MainWindow : Window
                 e.Data.GetData(System.Windows.DataFormats.FileDrop) is string[] paths)
             {
                 var insertionIndex = GetExternalDropInsertionIndex();
+                var importMode = GetImportMode(e.KeyStates);
                 RemoveExternalDropPlaceholder();
+                var insertedItems = new List<DockItem>();
                 foreach (var path in paths)
                 {
-                    var item = _importer.ImportFileSystemPath(_bar, path);
+                    var item = _importer.ImportFileSystemPath(_bar, path, importMode);
                     _viewModel.InsertItem(insertionIndex++, item);
+                    insertedItems.Add(item);
                 }
 
                 _store.Save();
                 PositionDock();
-                e.Effects = GetDockDropEffect(e.Data);
+                foreach (var item in insertedItems)
+                {
+                    AnimateItemArrival(item.Id, GetArrivalAnimation(importMode));
+                }
+
+                e.Effects = GetDockDropEffect(e.Data, importMode);
                 e.Handled = true;
                 return;
             }
@@ -901,6 +980,7 @@ public partial class MainWindow : Window
                 _viewModel.InsertItem(insertionIndex, item);
                 _store.Save();
                 PositionDock();
+                AnimateItemArrival(item.Id, DockItemArrivalAnimation.Shortcut);
                 e.Effects = System.Windows.DragDropEffects.Link;
                 e.Handled = true;
             }
@@ -925,7 +1005,7 @@ public partial class MainWindow : Window
         if (!_bar.LockItems && CanImport(e.Data))
         {
             UpdateExternalDropPlaceholderFromPointer(e.GetPosition(DockItemsControl));
-            e.Effects = GetDockDropEffect(e.Data);
+            e.Effects = GetDockDropEffect(e.Data, GetImportMode(e.KeyStates));
             e.Handled = true;
             return;
         }
@@ -1424,12 +1504,169 @@ public partial class MainWindow : Window
         };
     }
 
+    private void AnimateItemArrival(string itemId, DockItemArrivalAnimation animation)
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            var button = FindDockItemButtonById(DockItemsControl, itemId);
+            if (button is null)
+            {
+                return;
+            }
+
+            var (scale, translate) = EnsureItemTransforms(button);
+            scale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+            scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+            translate.BeginAnimation(TranslateTransform.XProperty, null);
+            translate.BeginAnimation(TranslateTransform.YProperty, null);
+            button.BeginAnimation(OpacityProperty, null);
+
+            var duration = TimeSpan.FromMilliseconds(animation == DockItemArrivalAnimation.MoveIn ? 230 : 170);
+            var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+            var moveOffset = animation == DockItemArrivalAnimation.MoveIn ? GetMoveAnimationOffset(20) : new Vector();
+
+            scale.ScaleX = animation == DockItemArrivalAnimation.MoveIn ? 0.72 : 0.88;
+            scale.ScaleY = scale.ScaleX;
+            translate.X = moveOffset.X;
+            translate.Y = moveOffset.Y;
+            button.Opacity = 0.0;
+
+            scale.BeginAnimation(ScaleTransform.ScaleXProperty, CreateArrivalScaleAnimation(animation));
+            scale.BeginAnimation(ScaleTransform.ScaleYProperty, CreateArrivalScaleAnimation(animation));
+            translate.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(0, duration) { EasingFunction = ease });
+            translate.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(0, duration) { EasingFunction = ease });
+            button.BeginAnimation(OpacityProperty, new DoubleAnimation(1.0, duration) { EasingFunction = ease });
+        }, DispatcherPriority.Loaded);
+    }
+
+    private bool AnimateDragPreviewExit(DockDragExitAnimation animation)
+    {
+        if (_dragPreviewPopup?.IsOpen != true || _dragPreviewShell is not { } preview)
+        {
+            return false;
+        }
+
+        var scale = preview.RenderTransform as ScaleTransform;
+        if (scale is null)
+        {
+            scale = new ScaleTransform(1, 1);
+            preview.RenderTransform = scale;
+        }
+
+        var duration = TimeSpan.FromMilliseconds(animation == DockDragExitAnimation.MoveOut ? 190 : 160);
+        var ease = new CubicEase { EasingMode = EasingMode.EaseIn };
+        var targetScale = animation == DockDragExitAnimation.MoveOut ? 1.18 : 0.38;
+        var glowColor = animation == DockDragExitAnimation.MoveOut
+            ? Color.FromRgb(80, 180, 255)
+            : Color.FromRgb(255, 80, 96);
+
+        preview.Effect = new DropShadowEffect
+        {
+            BlurRadius = 22,
+            Color = glowColor,
+            Opacity = 0.72,
+            ShadowDepth = 0
+        };
+
+        var previewToClose = preview;
+        var opacityAnimation = new DoubleAnimation(0, duration) { EasingFunction = ease };
+        opacityAnimation.Completed += (_, _) =>
+        {
+            if (ReferenceEquals(_dragPreviewShell, previewToClose))
+            {
+                HideDragPreview();
+            }
+        };
+        scale.BeginAnimation(ScaleTransform.ScaleXProperty, new DoubleAnimation(targetScale, duration) { EasingFunction = ease });
+        scale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(targetScale, duration) { EasingFunction = ease });
+        preview.BeginAnimation(OpacityProperty, opacityAnimation);
+        return true;
+    }
+
+    private static DoubleAnimationUsingKeyFrames CreateArrivalScaleAnimation(DockItemArrivalAnimation animation)
+    {
+        if (animation == DockItemArrivalAnimation.MoveIn)
+        {
+            return new DoubleAnimationUsingKeyFrames
+            {
+                KeyFrames =
+                {
+                    new EasingDoubleKeyFrame(1.13, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(95)), new CubicEase { EasingMode = EasingMode.EaseOut }),
+                    new EasingDoubleKeyFrame(0.98, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(165)), new CubicEase { EasingMode = EasingMode.EaseInOut }),
+                    new EasingDoubleKeyFrame(1.0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(230)), new CubicEase { EasingMode = EasingMode.EaseOut })
+                }
+            };
+        }
+
+        return new DoubleAnimationUsingKeyFrames
+        {
+            KeyFrames =
+            {
+                new EasingDoubleKeyFrame(1.04, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(80)), new CubicEase { EasingMode = EasingMode.EaseOut }),
+                new EasingDoubleKeyFrame(1.0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(170)), new CubicEase { EasingMode = EasingMode.EaseOut })
+            }
+        };
+    }
+
+    private Vector GetMoveAnimationOffset(double distance)
+    {
+        return _bar.Edge switch
+        {
+            DockEdge.Top => new Vector(0, -distance),
+            DockEdge.Left => new Vector(-distance, 0),
+            DockEdge.Right => new Vector(distance, 0),
+            _ => new Vector(0, distance)
+        };
+    }
+
     private static bool CanImport(System.Windows.IDataObject data)
     {
         return data.GetDataPresent(System.Windows.DataFormats.FileDrop) || TryGetUri(data, out _);
     }
 
-    private System.Windows.DragDropEffects GetDockDropEffect(System.Windows.IDataObject data)
+    private DockImportMode GetCurrentImportMode()
+    {
+        return IsMoveModifierPressed()
+            ? DockImportMode.MoveToBarFolder
+            : DockImportMode.CreateShortcutInBarFolder;
+    }
+
+    private DockImportMode GetImportMode(System.Windows.DragDropKeyStates keyStates)
+    {
+        return IsMoveModifierPressed(keyStates)
+            ? DockImportMode.MoveToBarFolder
+            : DockImportMode.CreateShortcutInBarFolder;
+    }
+
+    private DockItemArrivalAnimation GetArrivalAnimation(DockImportMode importMode)
+    {
+        return importMode == DockImportMode.MoveToBarFolder
+            ? DockItemArrivalAnimation.MoveIn
+            : DockItemArrivalAnimation.Shortcut;
+    }
+
+    private bool IsMoveModifierPressed()
+    {
+        var modifiers = Keyboard.Modifiers;
+        return _bar.MoveModifierKey switch
+        {
+            DockMoveModifierKey.Control => modifiers.HasFlag(ModifierKeys.Control),
+            DockMoveModifierKey.Alt => modifiers.HasFlag(ModifierKeys.Alt),
+            _ => modifiers.HasFlag(ModifierKeys.Shift)
+        };
+    }
+
+    private bool IsMoveModifierPressed(System.Windows.DragDropKeyStates keyStates)
+    {
+        return _bar.MoveModifierKey switch
+        {
+            DockMoveModifierKey.Control => keyStates.HasFlag(System.Windows.DragDropKeyStates.ControlKey),
+            DockMoveModifierKey.Alt => keyStates.HasFlag(System.Windows.DragDropKeyStates.AltKey),
+            _ => keyStates.HasFlag(System.Windows.DragDropKeyStates.ShiftKey)
+        };
+    }
+
+    private System.Windows.DragDropEffects GetDockDropEffect(System.Windows.IDataObject data, DockImportMode importMode)
     {
         if (_bar.LockItems)
         {
@@ -1443,7 +1680,7 @@ public partial class MainWindow : Window
 
         if (data.GetDataPresent(System.Windows.DataFormats.FileDrop))
         {
-            return _bar.ImportMode == DockImportMode.CreateShortcutInBarFolder
+            return importMode == DockImportMode.CreateShortcutInBarFolder
                 ? System.Windows.DragDropEffects.Link
                 : System.Windows.DragDropEffects.Move;
         }
@@ -1485,8 +1722,6 @@ public partial class MainWindow : Window
         addMenu.Items.Add(CreateMenuItem(text["MenuFile"], (_, _) => AddFilesFromDialog()));
         addMenu.Items.Add(CreateMenuItem(text["MenuFolder"], (_, _) => AddFolderFromDialog()));
         addMenu.Items.Add(CreateMenuItem(text["MenuSeparator"], (_, _) => AddPersistentItem(DockItem.CreateSeparator(text["ItemSeparator"]))));
-        addMenu.Items.Add(CreateMenuItem(text["MenuSettings"], (_, _) => AddPersistentItem(DockItem.CreateDockSettings(text["ItemSettings"]))));
-        addMenu.Items.Add(CreateMenuItem(text["MenuExit"], (_, _) => AddPersistentItem(DockItem.CreateQuit(text["ItemExit"]))));
         menu.Items.Add(addMenu);
 
         menu.Items.Add(new System.Windows.Controls.Separator());
@@ -1558,9 +1793,12 @@ public partial class MainWindow : Window
     {
         try
         {
+            var importMode = GetCurrentImportMode();
             foreach (var path in paths)
             {
-                AddPersistentItem(_importer.ImportFileSystemPath(_bar, path));
+                AddPersistentItem(
+                    _importer.ImportFileSystemPath(_bar, path, importMode),
+                    GetArrivalAnimation(importMode));
             }
         }
         catch (Exception ex)
@@ -1572,6 +1810,11 @@ public partial class MainWindow : Window
 
     private void AddPersistentItem(DockItem item)
     {
+        AddPersistentItem(item, DockItemArrivalAnimation.Shortcut);
+    }
+
+    private void AddPersistentItem(DockItem item, DockItemArrivalAnimation animation)
+    {
         if (_bar.LockItems)
         {
             return;
@@ -1581,6 +1824,7 @@ public partial class MainWindow : Window
         _store.Save();
         RefreshRunningIndicators();
         PositionDock();
+        AnimateItemArrival(item.Id, animation);
     }
 
     private void ChangeEdge(DockEdge edge)
@@ -1612,7 +1856,8 @@ public partial class MainWindow : Window
             _viewModel.Items.Count,
             _viewModel.ItemButtonSize,
             _bar.IconSpacing,
-            _viewModel.ZoomOverhang,
+            _viewModel.HorizontalZoomOverhang,
+            _viewModel.VerticalZoomOverhang,
             _bar.Offset,
             _bar.CenterOffset,
             _bar.BarWidth,
@@ -1886,7 +2131,6 @@ public partial class MainWindow : Window
     {
         var area = GetCurrentWorkingArea();
         const double visibleStrip = 6;
-        var overhang = _viewModel.ZoomOverhang;
 
         var left = _visibleLeft;
         var top = _visibleTop;
@@ -1894,16 +2138,16 @@ public partial class MainWindow : Window
         switch (_bar.Edge)
         {
             case DockEdge.Bottom:
-                top = area.Bottom - visibleStrip - overhang;
+                top = area.Bottom - visibleStrip - _viewModel.VerticalZoomOverhang;
                 break;
             case DockEdge.Top:
-                top = area.Top - Height + visibleStrip + overhang;
+                top = area.Top - Height + visibleStrip + _viewModel.VerticalZoomOverhang;
                 break;
             case DockEdge.Left:
-                left = area.Left - Width + visibleStrip + overhang;
+                left = area.Left - Width + visibleStrip + _viewModel.HorizontalZoomOverhang;
                 break;
             case DockEdge.Right:
-                left = area.Right - visibleStrip - overhang;
+                left = area.Right - visibleStrip - _viewModel.HorizontalZoomOverhang;
                 break;
         }
 
@@ -2360,6 +2604,18 @@ public partial class MainWindow : Window
     private static void TraceDrag(string message)
     {
         RuntimeLog.WriteDiagnostic("drag", message);
+    }
+
+    private enum DockItemArrivalAnimation
+    {
+        Shortcut,
+        MoveIn
+    }
+
+    private enum DockDragExitAnimation
+    {
+        RemoveFromBar,
+        MoveOut
     }
 
     [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]

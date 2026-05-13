@@ -35,7 +35,7 @@ No portable zip. No loose DLL hunt. Install it, launch it, tune it, move on.
 ## What It Does
 
 - Runs as a clean per-user dock for Windows, with one app managing multiple docks.
-- Starts new docks with the Windows button, Recycle Bin, Settings, and Exit items ready.
+- Starts new docks with Windows, Windows Settings, File Explorer, Microsoft Edge, and Recycle Bin ready.
 - Supports files, folders, links, separators, animated GIFs, the native Recycle Bin, and temporary minimized-window items.
 - Opens the native Start menu with left-click on the Windows button and the native Win+X menu with right-click.
 - Lets you place docks on the top, bottom, left, or right edge, with true vertical layout on the side edges.
@@ -58,7 +58,7 @@ The installer is the intended distribution path. The app is self-contained, so t
 
 Right-click the dock and open **Dock settings**.
 
-- **General:** dock name, language, startup, locking, auto-hide, Windows button, Recycle Bin, native taskbar hiding, import behavior, and managed dock folder.
+- **General:** dock name, language, startup, locking, auto-hide, Windows button, Recycle Bin, native taskbar hiding, move modifier key, and managed dock folder.
 - **Icons:** size, opacity, labels, spacing, bottom margin, quality, hover magnification, magnification range, and animated GIF items.
 - **Position:** monitor, screen edge, layering, width, height, edge distance, and center offset.
 - **Style:** themes, background opacity, dock radius, icon tile radius, font, font size, and label color.
@@ -75,7 +75,7 @@ Rock ET Dock is intentionally per-user:
 - Managed dock root: `%USERPROFILE%\Rock ET Dock`
 - Managed folder per dock: `%USERPROFILE%\Rock ET Dock\<dock-name>`
 
-When you drop a file or folder onto the dock, Rock ET Dock either moves it into the managed dock folder or creates a shortcut there, depending on the selected import mode. That keeps dock-owned content predictable and easy to back up.
+When you drop a file or folder onto the dock, Rock ET Dock creates a shortcut in the managed dock folder by default. Hold the configured move modifier key, `Shift` by default, to move the item into the dock folder instead. Dragging an item out of the dock removes the dock shortcut by default; holding the move modifier moves app-managed dock files back out.
 
 ## Build From Source
 
