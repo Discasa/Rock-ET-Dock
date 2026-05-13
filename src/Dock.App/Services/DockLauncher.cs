@@ -1,4 +1,6 @@
+using System;
 using System.Diagnostics;
+using System.IO;
 using Dock.App.Models;
 
 namespace Dock.App.Services;
@@ -29,13 +31,56 @@ public static class DockLauncher
             return false;
         }
 
+        if (IsWindowsSettingsTarget(item.TargetPath))
+        {
+            StartShellTarget("ms-settings:");
+            return true;
+        }
+
+        if (IsFileExplorerTarget(item.TargetPath))
+        {
+            StartShellTarget("explorer.exe");
+            return true;
+        }
+
+        StartShellTarget(item.TargetPath);
+        return true;
+    }
+
+    public static bool IsWindowsShellCommand(DockItem item)
+    {
+        return !string.IsNullOrWhiteSpace(item.TargetPath) &&
+               (IsWindowsSettingsTarget(item.TargetPath) || IsFileExplorerTarget(item.TargetPath));
+    }
+
+    private static void StartShellTarget(string target)
+    {
         var startInfo = new ProcessStartInfo
         {
-            FileName = item.TargetPath,
+            FileName = target,
             UseShellExecute = true
         };
 
         Process.Start(startInfo);
-        return true;
+    }
+
+    private static bool IsWindowsSettingsTarget(string targetPath)
+    {
+        if (targetPath.StartsWith("ms-settings:", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return Path.GetFileName(targetPath).Equals("SystemSettings.exe", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsFileExplorerTarget(string targetPath)
+    {
+        if (targetPath.Equals("explorer.exe", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return Path.GetFileName(targetPath).Equals("explorer.exe", StringComparison.OrdinalIgnoreCase);
     }
 }

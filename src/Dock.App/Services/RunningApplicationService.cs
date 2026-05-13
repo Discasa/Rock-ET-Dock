@@ -88,6 +88,11 @@ public static class RunningApplicationService
             return false;
         }
 
+        if (DockLauncher.IsWindowsShellCommand(item))
+        {
+            return false;
+        }
+
         var targetPath = ShellShortcutService.ResolveLaunchTarget(item.TargetPath);
         if (!Path.GetExtension(targetPath).Equals(".exe", StringComparison.OrdinalIgnoreCase) ||
             !File.Exists(targetPath))

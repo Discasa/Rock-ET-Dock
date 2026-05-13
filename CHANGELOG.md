@@ -10,6 +10,7 @@ All notable changes to this project are documented here.
 - Changed first-run defaults to Windows, Windows Settings, File Explorer, Microsoft Edge, and Recycle Bin.
 - Changed drag-and-drop defaults so dropping into the dock creates shortcuts and dragging out removes dock shortcuts; holding the configurable move modifier, `Shift` by default, performs managed file moves.
 - Added distinct drag animations for move actions and remove-from-dock actions.
+- Fixed first-run Windows Settings and File Explorer items so they launch through Windows shell commands instead of being treated as ordinary running app executables.
 
 ## 0.3.0 - 2026-05-13
 

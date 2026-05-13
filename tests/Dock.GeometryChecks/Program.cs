@@ -39,6 +39,7 @@ ValidateSpecialCommandItems();
 ValidateDefaultDockItems();
 ValidateLegacySpecialItemsAreRemovedOnLoad();
 ValidateRunningApplicationMapping();
+ValidateWindowsShellCommandsBypassRunningActivation();
 ValidateDropPlaceholder();
 ValidateImportModes();
 ValidateAnimatedGifImport();
@@ -59,6 +60,7 @@ Console.WriteLine("Dock import, placeholder and GIF checks passed.");
 Console.WriteLine("Dock special command and running-app checks passed.");
 Console.WriteLine("Dock default item checks passed.");
 Console.WriteLine("Dock legacy special item migration checks passed.");
+Console.WriteLine("Dock Windows shell launch checks passed.");
 Console.WriteLine("Dock compact icon sizing checks passed.");
 Console.WriteLine("Dock neighbor zoom checks passed.");
 Console.WriteLine("Dock hover zoom offset checks passed.");
@@ -287,6 +289,35 @@ void ValidateRunningApplicationMapping()
 
     AssertTrue(RunningApplicationService.TryGetExecutablePath(item, out var executablePath), "current process path should be executable");
     AssertTrue(string.Equals(Path.GetFullPath(processPath), executablePath, StringComparison.OrdinalIgnoreCase), "executable path should normalize");
+}
+
+void ValidateWindowsShellCommandsBypassRunningActivation()
+{
+    var windowsPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+    var settingsItem = new DockItem
+    {
+        Kind = DockItemKind.Link,
+        DisplayName = "Windows Settings",
+        TargetPath = Path.Combine(windowsPath, "ImmersiveControlPanel", "SystemSettings.exe")
+    };
+    var settingsUriItem = new DockItem
+    {
+        Kind = DockItemKind.Link,
+        DisplayName = "Windows Settings",
+        TargetPath = "ms-settings:"
+    };
+    var explorerItem = new DockItem
+    {
+        Kind = DockItemKind.Link,
+        DisplayName = "File Explorer",
+        TargetPath = Path.Combine(windowsPath, "explorer.exe")
+    };
+
+    AssertTrue(DockLauncher.IsWindowsShellCommand(settingsItem), "SystemSettings.exe should be a Windows shell command");
+    AssertTrue(DockLauncher.IsWindowsShellCommand(settingsUriItem), "ms-settings URI should be a Windows shell command");
+    AssertTrue(DockLauncher.IsWindowsShellCommand(explorerItem), "explorer.exe should be a Windows shell command");
+    AssertTrue(!RunningApplicationService.TryGetExecutablePath(settingsItem, out _), "Settings should not be treated as a running app target");
+    AssertTrue(!RunningApplicationService.TryGetExecutablePath(explorerItem, out _), "File Explorer should not be treated as a running app target");
 }
 
 void ValidateDropPlaceholder()
