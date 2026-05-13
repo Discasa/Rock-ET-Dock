@@ -2,6 +2,13 @@
 
 Todas as mudancas relevantes deste projeto serao documentadas aqui.
 
+## 0.2.1 - 2026-05-13
+
+- Adicionado script de instalador Inno Setup/ISCC em `installer/RockETDock.iss`.
+- Adicionado helper `installer/build-installer.ps1` para publicar, empacotar e compilar o instalador.
+- Definida versao do app como `0.2.1` para a release com instalador.
+- Documentado comando de compilacao do instalador.
+
 ## 0.2.0 - 2026-05-13
 
 - Refatoradas operacoes de mover/copiar arquivos e pastas para `ManagedPathService`.

@@ -25,6 +25,7 @@ dotnet build Dock.slnx
 dotnet run --project src\Dock.App\Dock.App.csproj
 dotnet run --project tests\Dock.GeometryChecks\Dock.GeometryChecks.csproj
 dotnet publish src\Dock.App\Dock.App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
 ```
 
 Tambem existe `run.bat` para iniciar o app a partir da raiz do projeto.
