@@ -82,7 +82,7 @@ Each dock needs:
 - Topmost/normal/behind layering.
 - Auto-hide and mouseover popup behavior.
 
-The geometry code should be deterministic and testable outside WPF. Rock ET Dock keeps these rules in `DockGeometry` and covers them through `tests/Dock.GeometryChecks`.
+The geometry code should be deterministic and testable outside WPF. Rock ET Dock keeps these rules in `DockGeometry` and covers them through `tests/RockETDock.GeometryChecks`.
 
 ## Storage Contract
 

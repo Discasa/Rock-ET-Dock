@@ -2,6 +2,6 @@
 setlocal
 
 cd /d "%~dp0"
-dotnet run --project "src\Dock.App\Dock.App.csproj"
+dotnet run --project "src\RockETDock.App\RockETDock.App.csproj"
 
 endlocal

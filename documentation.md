@@ -4,9 +4,9 @@ Rock ET Dock is a WPF Windows dock and app launcher. It recreates classic dock b
 
 ## Repository Layout
 
-- `Dock.slnx`: .NET solution.
-- `src/Dock.App`: main WPF application.
-- `tests/Dock.GeometryChecks`: executable checks for geometry, sizing, reorder, import/export, and configuration behavior.
+- `RockETDock.slnx`: .NET solution.
+- `src/RockETDock.App`: main WPF application.
+- `tests/RockETDock.GeometryChecks`: executable checks for geometry, sizing, reorder, import/export, and configuration behavior.
 - `assets`: project-owned images and README assets.
 - `docs`: research notes and implementation requirements.
 - `installer`: Inno Setup packaging script and PowerShell build helper.
@@ -24,9 +24,9 @@ Build outputs under `bin/`, `obj/`, and `artifacts/` are generated locally and c
 ## Commands
 
 ```powershell
-dotnet build Dock.slnx -v minimal
-dotnet run --project src\Dock.App\Dock.App.csproj
-dotnet run --project tests\Dock.GeometryChecks\Dock.GeometryChecks.csproj
+dotnet build RockETDock.slnx -v minimal
+dotnet run --project src\RockETDock.App\RockETDock.App.csproj
+dotnet run --project tests\RockETDock.GeometryChecks\RockETDock.GeometryChecks.csproj
 powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
 ```
 
@@ -50,7 +50,7 @@ For smoke tests without touching the real user profile:
 ```powershell
 $env:ROCK_ET_DOCK_LOCALAPPDATA = "$env:TEMP\rock-et-dock-local"
 $env:ROCK_ET_DOCK_USERPROFILE = "$env:TEMP\rock-et-dock-profile"
-dotnet run --project src\Dock.App\Dock.App.csproj
+dotnet run --project src\RockETDock.App\RockETDock.App.csproj
 ```
 
 ## Current Features
@@ -109,8 +109,8 @@ The installer creates Start Menu shortcuts for **Rock ET Dock**, **Rock ET Dock 
 Before publishing changes, run:
 
 ```powershell
-dotnet build Dock.slnx -v minimal
-dotnet run --project tests\Dock.GeometryChecks\Dock.GeometryChecks.csproj
+dotnet build RockETDock.slnx -v minimal
+dotnet run --project tests\RockETDock.GeometryChecks\RockETDock.GeometryChecks.csproj
 ```
 
 Avoid running build and checks in parallel because WPF generation can contend over temporary files in `obj`.

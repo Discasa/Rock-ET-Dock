@@ -1,5 +1,5 @@
 @echo off
 setlocal
 pushd "%~dp0"
-dotnet run --project "src\Dock.App\Dock.App.csproj" -- --settings
+dotnet run --project "src\RockETDock.App\RockETDock.App.csproj" -- --settings
 popd

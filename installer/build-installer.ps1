@@ -31,7 +31,7 @@ if (Test-Path $publishDir) {
     Remove-Item -Recurse -Force $publishDir
 }
 
-dotnet publish "src\Dock.App\Dock.App.csproj" `
+dotnet publish "src\RockETDock.App\RockETDock.App.csproj" `
     -c Release `
     -r win-x64 `
     --self-contained true `

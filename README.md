@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/Dock.App/Assets/rock-et-dock-icon.png" width="96" alt="Rock ET Dock icon">
+  <img src="src/RockETDock.App/Assets/rock-et-dock-icon.png" width="96" alt="Rock ET Dock icon">
 </p>
 
 # Rock ET Dock
@@ -89,11 +89,11 @@ Requirements:
 - Inno Setup 6, only when building the installer
 
 ```powershell
-dotnet build Dock.slnx -v minimal
-dotnet run --project src\Dock.App\Dock.App.csproj
+dotnet build RockETDock.slnx -v minimal
+dotnet run --project src\RockETDock.App\RockETDock.App.csproj
 .\dock_run.bat
 .\dock_settings.bat
-dotnet run --project tests\Dock.GeometryChecks\Dock.GeometryChecks.csproj
+dotnet run --project tests\RockETDock.GeometryChecks\RockETDock.GeometryChecks.csproj
 powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
 ```
 
