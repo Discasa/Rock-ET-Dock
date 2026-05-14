@@ -465,7 +465,7 @@
                                     <ComboBox x:Name="ThemeBox" Grid.Column="1" />
                                 </Grid>
                                 <TextBlock Text="{Binding Text[SettingsBackgroundOpacity]}" />
-                                <Slider x:Name="BackgroundOpacitySlider" Minimum="15" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
+                                <Slider x:Name="BackgroundOpacitySlider" Minimum="0" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
                                 <TextBlock Text="{Binding Text[SettingsShellCornerRadius]}" />
                                 <Slider x:Name="ShellCornerRadiusSlider" Minimum="0" Maximum="36" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,4,0,12" />
                                 <TextBlock Text="{Binding Text[SettingsTileCornerRadius]}" />

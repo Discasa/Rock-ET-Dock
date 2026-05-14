@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+- Fixed the background opacity slider so its minimum value makes the dock shell fully invisible, including border and shadow.
+- Renamed the repository helper scripts to `dock_run.bat`, `dock_settings.bat`, and `dock_reset.bat`.
+
 ## 0.4.0 - 2026-05-13
 
 - Added native Windows shell context menus for dock items so right-click behavior matches Explorer.

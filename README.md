@@ -58,7 +58,7 @@ The installer is the intended distribution path. The app is self-contained, so t
 
 ## Tune The Dock
 
-Open **Rock ET Dock Settings** from the Start Menu. In the repository build, `settings.bat` opens the same settings-only mode.
+Open **Rock ET Dock Settings** from the Start Menu. In the repository build, `dock_settings.bat` opens the same settings-only mode.
 
 - **General:** dock name, language, startup, locking, auto-hide, Windows button, Recycle Bin, native taskbar hiding, new dock creation, move modifier key, GIF modifier key, and managed dock folder.
 - **Icons:** size, opacity, labels, spacing, bottom margin, quality, hover magnification, magnification range, and animated GIF items.
@@ -91,7 +91,8 @@ Requirements:
 ```powershell
 dotnet build Dock.slnx -v minimal
 dotnet run --project src\Dock.App\Dock.App.csproj
-.\settings.bat
+.\dock_run.bat
+.\dock_settings.bat
 dotnet run --project tests\Dock.GeometryChecks\Dock.GeometryChecks.csproj
 powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
 ```

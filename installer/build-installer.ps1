@@ -44,7 +44,7 @@ dotnet publish "src\Dock.App\Dock.App.csproj" `
 $mainExe = Join-Path $publishDir "Rock ET Dock.exe"
 $settingsExe = Join-Path $publishDir "Rock ET Dock Settings.exe"
 Copy-Item $mainExe $settingsExe -Force
-Copy-Item "LICENSE", "README.md", "CHANGELOG.md", "documentation.md", "settings.bat" -Destination $publishDir -Force
+Copy-Item "LICENSE", "README.md", "CHANGELOG.md", "documentation.md", "dock_settings.bat" -Destination $publishDir -Force
 
 New-Item -ItemType Directory -Force $installerDir | Out-Null
 & $isccPath "/DAppVersion=$Version" $scriptPath

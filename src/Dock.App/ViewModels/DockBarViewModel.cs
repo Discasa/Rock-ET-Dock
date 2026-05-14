@@ -124,14 +124,22 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
     {
         get
         {
-            var alpha = (byte)(Clamp(Bar.BackgroundOpacity, 15, 100) * 255 / 100);
+            var opacity = ShellBackgroundOpacityPercent;
+            if (opacity <= 0)
+            {
+                return Brushes.Transparent;
+            }
+
+            var alpha = (byte)(opacity * 255 / 100);
             var color = GetThemePalette(Bar.Theme).ShellColor;
 
             return new SolidColorBrush(Color.FromArgb(alpha, color.R, color.G, color.B));
         }
     }
 
-    public Brush ShellBorderBrush => CreateBrush(GetThemePalette(Bar.Theme).ShellBorder);
+    public Brush ShellBorderBrush => ShellBackgroundOpacityPercent <= 0
+        ? Brushes.Transparent
+        : CreateBrush(GetThemePalette(Bar.Theme).ShellBorder);
 
     public Brush TileBackground => CreateBrush(GetThemePalette(Bar.Theme).TileBackground);
 
@@ -147,7 +155,9 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
         ? 3
         : Math.Max(16, IconTileSize * 0.72);
 
-    public double ShadowOpacity => GetThemePalette(Bar.Theme).ShadowOpacity;
+    public double ShadowOpacity => ShellBackgroundOpacityPercent <= 0
+        ? 0
+        : GetThemePalette(Bar.Theme).ShadowOpacity;
 
     public Brush LabelBrush
     {
@@ -458,6 +468,8 @@ public sealed class DockBarViewModel : INotifyPropertyChanged
     }
 
     private double FocusedZoomScale => Clamp((double)Bar.ZoomSize / Math.Max(1, Bar.IconSize), 1.0, 1.8);
+
+    private int ShellBackgroundOpacityPercent => Clamp(Bar.BackgroundOpacity, 0, 100);
 
     private double CalculateRequiredHoverAxisExtent()
     {

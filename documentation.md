@@ -29,8 +29,9 @@ dotnet run --project tests\Dock.GeometryChecks\Dock.GeometryChecks.csproj
 powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
 ```
 
-`run.bat` also starts the app from the repository root.
-`settings.bat` opens the settings launcher mode from the repository root.
+`dock_run.bat` also starts the app from the repository root.
+`dock_settings.bat` opens the settings launcher mode from the repository root.
+`dock_reset.bat` resets the current user's configuration while preserving managed dock items.
 
 The official distribution artifact is the installer under `artifacts\installer`. The publish folder under `artifacts\publish` is an intermediate input for the installer.
 

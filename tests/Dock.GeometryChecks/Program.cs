@@ -52,6 +52,7 @@ ValidateCustomBarGeometry();
 ValidatePlaceholderIsGapOnly();
 ValidateLocalization();
 ValidateVerticalDockGeometryAndOrientation();
+ValidateTransparentBackgroundOpacity();
 
 Console.WriteLine("Dock geometry checks passed for Top, Bottom, Left and Right.");
 Console.WriteLine("Dock reorder checks passed.");
@@ -69,6 +70,7 @@ Console.WriteLine("Dock custom bar sizing checks passed.");
 Console.WriteLine("Dock placeholder gap checks passed.");
 Console.WriteLine("Dock localization checks passed.");
 Console.WriteLine("Dock vertical edge checks passed.");
+Console.WriteLine("Dock transparent background checks passed.");
 
 void Validate(DockEdge edge, DockPlacement placement)
 {
@@ -674,6 +676,30 @@ void ValidateVerticalDockGeometryAndOrientation()
     AssertTrue(horizontalPlacement.WindowWidth > horizontalPlacement.WindowHeight, "bottom dock window should be wider than tall");
 }
 
+void ValidateTransparentBackgroundOpacity()
+{
+    var transparentBar = new DockBarSettings
+    {
+        BackgroundOpacity = 0,
+        Theme = "Rock ET Glass"
+    };
+    var transparentViewModel = new DockBarViewModel(transparentBar);
+
+    AssertTrue(GetBrushAlpha(transparentViewModel.ShellBackground) == 0, "minimum background opacity should make shell background transparent");
+    AssertTrue(GetBrushAlpha(transparentViewModel.ShellBorderBrush) == 0, "minimum background opacity should hide shell border");
+    AssertTrue(transparentViewModel.ShadowOpacity == 0, "minimum background opacity should hide shell shadow");
+
+    var opaqueBar = new DockBarSettings
+    {
+        BackgroundOpacity = 100,
+        Theme = "Rock ET Glass"
+    };
+    var opaqueViewModel = new DockBarViewModel(opaqueBar);
+
+    AssertTrue(GetBrushAlpha(opaqueViewModel.ShellBackground) == 255, "maximum background opacity should keep shell background opaque");
+    AssertTrue(opaqueViewModel.ShadowOpacity > 0, "non-transparent background opacity should keep shell shadow");
+}
+
 DockItem CreateItem(string id)
 {
     return new DockItem
@@ -708,4 +734,14 @@ void AssertTrue(bool condition, string name)
     {
         throw new InvalidOperationException(name);
     }
+}
+
+byte GetBrushAlpha(System.Windows.Media.Brush brush)
+{
+    if (brush is System.Windows.Media.SolidColorBrush solidColorBrush)
+    {
+        return solidColorBrush.Color.A;
+    }
+
+    return brush.Opacity <= 0 ? (byte)0 : (byte)255;
 }
